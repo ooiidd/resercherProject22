@@ -377,19 +377,18 @@ function activator_parser(node){
 	var ret={};
 	//if(node.childNodes.length >= 2){
 		ret["childNodes"]=[];
-		ret["attributes"]=[];
+		ret["attributes"]={};
 		ret["tagname"]=node.tagName;
-		for(var i=0;i<node.attributes.length;i++){
+		for(var i in node.attributes){
 			var tagname = node.tagName;
 			var name = node.attributes[i].name;
 			var value = node.attributes[i].value;
-			var push_data = {};
-			push_data[name]=value;
-			ret["attributes"].push(push_data);
+			
+			ret["attributes"][name] = value;
 			//console.log(tagname+" "+name+" "+value);
 		}
 		if(node.childNodes.length==1){
-			ret["attributes"].push({"value":node.childNodes[0].data});
+			ret["attributes"]['value']=node.childNodes[0].data;
 			//console.log("value "+node.childNodes[0].data);
 		}
 		for(var i=1;i<node.childNodes.length;i+=2){
@@ -405,26 +404,6 @@ function activator_parser(node){
  * Convert Button
  */
 exports.xmlparse = function(req, res){//xml to svg
-	/* test *//*
-	var eurl = "https://www.skyscanner.co.kr/transport/d/sela/2018-07-26/wars/spu/2018-08-09/sela?adults=1&children=0&adultsv2=1&childrenv2=&infants=0&cabinclass=economy&ref=home#results";
-	console.log(req.query.subject);
-	console.log(req.query.predicate);
-	var headers = {
-		    'User-Agent':       'Super Agent/0.0.1',
-		    'Content-Type':     'application/x-www-form-urlencoded'
-	}
-	var options = {
-			url: eurl,
-			method: 'GET',
-			headers: headers
-	}
-	request(options,function(error, response, body){
-		if(!error && response.statusCode == 200){
-			console.log(body);
-			res.json(body);
-		}
-	});
-	*/
 	
 	
 	var area = req.body.textarea;

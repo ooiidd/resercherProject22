@@ -27,6 +27,13 @@ var rectarr=new Array(100);//rectarr[col][row]
 
 var activate={},condition={},con_case={},context={};
 
+function check_defined(e,prop){
+	if(e){
+		return e[prop];
+	}
+	return '';
+}
+
 for(var i=0;i<100;i++)
 	rectarr[i] = new Array(100);
 var arrow = svg.path("M2,2 L2,11 L10,6 L2,2").attr({fill:'#000000'});
@@ -81,7 +88,7 @@ function activator_list(){
 	$('#name').append($('<input/>',{
 		type:'text',
 		id: 'nameinput',
-		value : (activator=='' ? '' : activator.attributes[0].name),
+		value : (activator=='' ? '' : activator.attributes.name),
 		onchange:"textChangef()"//수정 필요
 	}));
 
@@ -163,17 +170,31 @@ function activator_list(){
 	
 	//Activate 태그
 	$('#activateDiv').append('<hr>');
-	var activate_attr = '<div data-tagname="activate"><table><span>ACTIVATE</span><tr><td><span>flow</span></td>';
-	activate_attr += '<td><input class="input" type="text" value="'+activate.attributes[0].flow+'"></input></td></tr></table></div>';
-	$('#activateDiv').append(activate_attr);
+	if(activate.attributes){
+		var activate_attr = '<div data-tagname="activate"><table><span>ACTIVATE</span><tr><td><span>flow</span></td>';
+		activate_attr += '<td><input class="input" type="text" value="'+activate.attributes.flow+'"></input></td></tr></table></div>';
+		$('#activateDiv').append(activate_attr);
+	}
+	else{
+		var activate_attr = '<div data-tagname="activate"><table><span>ACTIVATE</span><tr><td><span>flow</span></td>';
+		activate_attr += '<td><input class="input" type="text" value=\"\"></input></td></tr></table></div>';
+		$('#activateDiv').append(activate_attr);
+	}
 	//$('#conditiondiv').append('<span>condition expression: </span>');
 	//$('#conditiondiv').append('<br>');
 	
 	//condition 태그
 	$('#conditionDiv').append('<hr>');
-	var condition_attr = '<div data-tagname="condition"><table><span>CONDITION</span>';
-	condition_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text" value="'+condition.attributes[0].expression+'"></input></td></tr></table></div>'
-	$('#conditionDiv').append(condition_attr);
+	if(condition.attributes){
+		var condition_attr = '<div data-tagname="condition"><table><span>CONDITION</span>';
+		condition_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text" value="'+condition.attributes.expression+'"></input></td></tr></table></div>'
+		$('#conditionDiv').append(condition_attr);
+	}
+	else{
+		var condition_attr = '<div data-tagname="condition"><table><span>CONDITION</span>';
+		condition_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text" value=\"\"></input></td></tr></table></div>'
+		$('#conditionDiv').append(condition_attr);
+	}
 	
 	//condition case태그
 	var case_attr = '<div data-tagname="case"><table><span>CONDITION-CASE</span>';
@@ -253,9 +274,9 @@ function activator_list(){
 	
 	$("#attr").on("click",".Del",function(){
 		var num = $(this).parent().attr('data-value');
-		console.log($(this).parent().attr('data-value'));
+		//console.log($(this).parent().attr('data-value'));
 		var num2 = $(this).parent().parent().attr('data-value');
-		console.log($(this).parent().parent().attr('data-value'));
+		//console.log($(this).parent().parent().attr('data-value'));
 		var tagname = $(this).parent().attr('data-tagname');
 		if(tagname == 'message'){
 //			activator['childNodes'].splice(Number(num),1);
@@ -298,7 +319,7 @@ function activator_list(){
 					if(key == attr_name){
 						bool = false;
 						activator.childNodes[num].attributes[i][key]=value;
-						console.log(activator.childNodes[num].attributes[i][key]);
+						//console.log(activator.childNodes[num].attributes[i][key]);
 					}
 				}
 			}
@@ -322,7 +343,7 @@ function activator_list(){
 				activator.childNodes[num2].childNodes[num].attributes.push(temp);
 			}
 		}else if(tagname == 'activate'){
-			console.log('acti or condi');
+			//console.log('acti or condi');
 			for(var i in activate.attributes){
 				for(var key in activate.attributes[i]){
 					if(key == attr_name){
@@ -337,7 +358,7 @@ function activator_list(){
 				activate.attributes.push(temp);
 			}
 		}else if(tagname == 'condition'){
-			console.log('acti or condi');
+			//console.log('acti or condi');
 			for(var i in condition.attributes){
 				for(var key in condition.attributes[i]){
 					if(key == attr_name){
@@ -371,7 +392,7 @@ function activator_list(){
 					if(key == attr_name){
 						bool = false;
 						con_case.childNodes[num].attributes[i][key]=value;
-						console.log(con_case.childNodes[num].attributes[i][key]);
+						//console.log(con_case.childNodes[num].attributes[i][key]);
 					}
 				}
 			}
@@ -400,7 +421,7 @@ function activator_list(){
 					if(key == attr_name){
 						bool = false;
 						context.childNodes[num].attributes[i][key]=value;
-						console.log(context.childNodes[num].attributes[i][key]);
+						//console.log(context.childNodes[num].attributes[i][key]);
 					}
 				}
 			}
@@ -431,7 +452,7 @@ function activator_list(){
 
 //Activator Click 리스너
 function activator_click(){
-	console.log("acti");
+	//console.log("acti");
 	if(currentRect != null){
 		currentRect.attr({
 			stroke : "#000",
@@ -491,19 +512,19 @@ function verb_select_f(){
 		data:params,
 		async: true,
 		success: function(data){
-			console.log(data);
+			//console.log(data);
 			var ret = (JSON.parse(data));
 			for(var obj in ret){
 				$('#object_select').append("<option value="+obj+">"+ret[obj]+"</option>");
 			}
 		},
 		error: function(json){
-			console.log("error : "+JSON.stringify(json));
+			//console.log("error : "+JSON.stringify(json));
 		}
 	});
 }
 function subject_select_f(){
-	console.log(currentRect.attr('nodename'));
+	//console.log(currentRect.attr('nodename'));
 	var params = {subject: $("#subject_select option:selected").text()};
 	currentRect.attr({
 		"subject_value" : $("#subject_select option:selected").text()
@@ -518,14 +539,14 @@ function subject_select_f(){
 		data:params,
 		async: true,
 		success: function(data){
-			console.log(data);
+			//console.log(data);
 			var ret = (JSON.parse(data));
 			for(var obj in ret){
 				$('#verb_select').append("<option value="+obj+">"+ret[obj]+"</option>");
 			}
 		},
 		error: function(json){
-			console.log("error : "+JSON.stringify(json));
+			//console.log("error : "+JSON.stringify(json));
 		}
 	});
 };
@@ -596,7 +617,7 @@ var docover2 = function(){
 		'stroke-opacity':"0.3"
 	});
 	this.mouseout(docout2);
-	console.log("drag remove");
+	//console.log("drag remove");
 	currentoverRect.undrag();
 }
 var docout2 = function(){
@@ -614,14 +635,14 @@ var docout2 = function(){
 		});
 	}
 	tempEllipse.remove();
-	console.log("drag add")
+	//console.log("drag add")
 	currentoverRect.drag(move,start,stop);
 }
 
 
 //선을 그리다가 점에 놓을때 발생하는 이벤트
 var docup = function(){
-	console.log("docup");
+	//console.log("docup");
 	lineDrawing=false;
 	svg.unmouseup();
 	svg.unmousemove();
@@ -674,7 +695,7 @@ var docover = function(){
 
 //rect 마우스를 위에 올렸을때 발생.
 var mouseover = function(){
-	console.log("mouseover");
+	//console.log("mouseover");
 	if(this===currentoverRect){
 		
 	}
@@ -719,7 +740,7 @@ var move = function(dx,dy,x,y,event){
 	temp_rect.attr({
 		transform: this.data('origTransform') + (this.data('origTransform') ? "T" : "t")+[dx,dy]
 	});
-	console.log("x = "+event.offsetX, " y = "+event.offsetY);
+	//console.log("x = "+event.offsetX, " y = "+event.offsetY);
 	var xpoint,ypoint;
 	xpoint = parseInt(event.offsetX/200)*200;
 	ypoint = parseInt(event.offsetY/80)*80;
@@ -737,7 +758,7 @@ var move = function(dx,dy,x,y,event){
 
 //rect drag 리스너중 start(mouse down 발생시)리스너
 var start = function(){
-	console.log("start");
+	//console.log("start");
 	activator_rect.attr({
 		stroke: "#000",
 		strokeWidth:1
@@ -775,30 +796,30 @@ var start = function(){
 		line_drawing=false;
 		return;
 	}
-	console.log(currentRect.attr("subject_value"));
-	console.log("test");
+	//console.log(currentRect.attr("subject_value"));
+	//console.log("test");
 	var request = $.ajax({
 		url: "/ajax1",
 		type: "GET",
 		dataType: 'json',
 		async: true,
 		success: function(data){
-			console.log(data);
+			//console.log(data);
 			var ret = (JSON.parse(data));
 			$('#subject_select').append("<option value="+currentRect.attr("subject_value")+">"+currentRect.attr("subject_value")+"</option>");
 			for(var obj in ret){
-				console.log(ret[obj]);
+				//console.log(ret[obj]);
 				$('#subject_select').append("<option value="+obj+">"+ret[obj]+"</option>");
 			}
 		},
 		error: function(json){
-			console.log("error : "+JSON.stringify(json));
+			//console.log("error : "+JSON.stringify(json));
 		}
 	});
 	$('#verb_select').append("<option value="+currentRect.attr("verb_value")+">"+currentRect.attr("verb_value")+"</option>");
 	$('#object_select').append("<option value="+currentRect.attr("verb_value")+">"+currentRect.attr("object_value")+"</option>");
 	//점선으로된 사각형 만들어줌
-	console.log("test : "+currentRect.type);
+	//console.log("test : "+currentRect.type);
 	
 	//원 일때 처리
 	if(currentRect.type == "ellipse"){
@@ -844,12 +865,12 @@ var start = function(){
 //rect drag 리스너중 stop(놓았을때 발생)
 var stop = function(){
 	if(line_drawing==false){
-		console.log("drag Stop");
+		//console.log("drag Stop");
 		currentoverRect=null;
 		var trans = this.transform().local;
 		var tempX,tempY,col_check,row_check;
-		console.log("highlight_rect : "+highlight_rect.attr('x'));
-		console.log("current_rect : "+currentRect.attr('cx'));
+		//console.log("highlight_rect : "+highlight_rect.attr('x'));
+		//console.log("current_rect : "+currentRect.attr('cx'));
 		if(currentRect.type == "ellipse"){
 			tempX = (Number(highlight_rect.attr('x'))+100)-Number(currentRect.attr('cx'));
 			tempY = Number(highlight_rect.attr('y'))+40-Number(currentRect.attr('cy'));
@@ -873,7 +894,7 @@ var stop = function(){
 			alert('exist');
 			return;
 		}
-		console.log("test2 : "+currentRect.type);
+		//console.log("test2 : "+currentRect.type);
 			this.attr({
 				transform:'1,0,0,1,0,0'
 			});
@@ -918,12 +939,12 @@ var stop = function(){
 				
 				if(typeof temp_children[i].attr('pathid') === 'string'){
 					var ptid = Number(temp_children[i].attr('pathid'));
-					console.log(ptid);
-					console.log(this.children());
+					//console.log(ptid);
+					//console.log(this.children());
 					circleArray[ptid].start.remove();
 					circleArray[ptid].end.remove();
 					
-					console.log(rectid+','+circleArray[ptid].srect+','+circleArray[ptid].erect);
+					//console.log(rectid+','+circleArray[ptid].srect+','+circleArray[ptid].erect);
 					path[ptid].remove();
 					drawLinef(circleArray[ptid].srect,circleArray[ptid].erect,ptid);
 				}
@@ -948,7 +969,7 @@ function addrect(left,right,width,height,nodename){
 		h= (height);
 		name=nodename;
 	}
-	console.log(nodename);
+	//console.log(nodename);
 
 	//source 와 sink동그라미 처리
 	var source_re = /\S*[Ss]ource/;
@@ -971,7 +992,7 @@ function addrect(left,right,width,height,nodename){
 			break;
 		}
 	}
-	console.log(temp_node);
+	//console.log(temp_node);
 	//findRectArr.push(name);
 	newrect.attr({
 		nodename:name,
@@ -1010,7 +1031,7 @@ $("#addrect").click(function(){
 			break;
 		}
 	}
-	console.log(temp_name);
+	//console.log(temp_name);
 	rectarr[temp_col][temp_row] = addrect(temp_col*200+25,temp_row*80+15,150,50,temp_name);
 	findRectArr.push({name:temp_name,col:temp_col,row:temp_row});
 });
@@ -1027,7 +1048,7 @@ function FindRectf(arr,nodename){
 function drawLinef(start,end,ptid){
 	var pathnum;
 	if(ptid){
-		console.log("pathid is good");
+		//console.log("pathid is good");
 		pathnum = ptid
 	}
 	else{
@@ -1035,9 +1056,9 @@ function drawLinef(start,end,ptid){
 		pathid++;
 	}
 	var srow,scol,erow,ecol;
-	console.log("start : "+start);
-	console.log("end : "+end)
-	console.log(findRectArr[start]);
+	//console.log("start : "+start);
+	//console.log("end : "+end)
+	//console.log(findRectArr[start]);
 	srow = findRectArr[start].row;
 	scol = findRectArr[start].col;
 	erow = findRectArr[end].row;
@@ -1160,19 +1181,21 @@ function drawLinef(start,end,ptid){
 		var forX,forY;
 		for(forY=srow+1;forY<erow;forY++){
 			if(rectarr[ecol][forY]){
-				console.log("break");
+				//console.log("break");
 				break;
 			}
-			else
-				console.log("no");
+			else{
+				
+			}
+				//console.log("no");
 		}
 		lineString = lineString+"L"+sCirclex+","+(sCircley+15);
 		if(forY>=erow){//아래 라인 안막힘
 			lineString=lineString+"L"+(ecol*200+100)+","+(sCircley+15);
 		}
 		else{//아래쪽으로 가는 라인에 사각형에 막힘
-			console.log("else");
-			console.log("forY : "+forY+" ,erow : "+erow)
+			//console.log("else");
+			//console.log("forY : "+forY+" ,erow : "+erow)
 			lineString=lineString+"L"+(ecol*200)+","+(sCircley+15);
 			lineString=lineString+"L"+(ecol*200)+","+(eCircley-15);
 			lineString=lineString+"L"+(ecol*200+100)+","+(eCircley-15);
@@ -1256,18 +1279,18 @@ function drawLinef(start,end,ptid){
 				}
 			}
 		}
-		console.log("forX : "+forX);
-		console.log("forY : "+forY);
-		console.log(erow);
+		//console.log("forX : "+forX);
+		//console.log("forY : "+forY);
+		//console.log(erow);
 		//처음 아래로 가는 선 그려주기
 		if(forY>=erow){
-			console.log("test for if");
+			//console.log("test for if");
 			lineString=lineString+"L"+sCirclex+","+(eCircley-15);
 			lineString=lineString+"L"+eCirclex+","+(eCircley-15);
 			
 		}
 		else{//아래쪽으로 가는 라인에 사각형에 막힘
-			console.log("test for else");
+			//console.log("test for else");
 			lineString=lineString+"L"+sCirclex+","+(forY*80);
 			lineString=lineString+"L"+(eCirclex+100)+","+(forY*80);
 			lineString=lineString+"L"+(eCirclex+100)+","+(eCircley-15);
@@ -1275,7 +1298,7 @@ function drawLinef(start,end,ptid){
 		}
 		
 		lineString=lineString+"L"+eCirclex+","+eCircley;
-		console.log(lineString);
+		//console.log(lineString);
 		path[pathnum]=svg.path(lineString);
 		path[pathnum].attr({
 			markerEnd: marker,
@@ -1389,14 +1412,14 @@ function findNode(arr,nodename,num){
 
 if(flow){
 	rectarr[0][0]=1;
-	console.log(flowname);
+	//console.log(flowname);
 	var line_queue=[];
 	var maxcol=-1;
 	
 	row=1;
 	col=0;
-	console.log("ok");
-	console.log(flow.length);
+	//console.log("ok");
+	//console.log(flow.length);
 	for(var i=0;i<flow.length;i++){
 		var ret = findNode(flow[i],"source",1);
 		while(flow[i].length > 0){
@@ -1430,9 +1453,32 @@ if(activator){
 }
 else{
 	activator = {};
-	activator['attributes']=[];
+	activator['attributes']={};
 	activator['childNodes']=[];
-	activator['attributes'].push({'name':'Activator'});
+	activator['attributes']['name']='Activator';
 	activator['tagname']='activator';
+	
+	condition['attributes']={};
+	condition['childNodes']=[];
+	condition['tagname']='condition';
+	
+	activate['attributes']={};
+	activate['childNodes']=[];
+	activate['tagname']='activate';
+	
+	con_case['attributes']={};
+	con_case['childNodes']=[];
+	con_case['tagname']='case';
+
+	context['attributes']={};
+	context['childNodes']=[];
+	context['tagname']='context';
+	
+	activator['childNodes'].push(condition);
+	activator['childNodes'].push(activate);
+	condition['childNodes'].push(con_case);
+	condition['childNodes'].push(context);
+	
+	console.log(JSON.stringify(activator));
 }
 
