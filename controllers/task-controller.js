@@ -13,6 +13,7 @@ exports.main = function(req, res){
 		flow : '',
 		text : '',
 		node : '',
+		node_inf : '',
 		activator : '',
 		flownamearr: null
 	});
@@ -323,6 +324,7 @@ exports.toxml = function(req,res){
 		xml : '',
 		flow : '',
 		node : '',
+		node_inf : '',
 		activator : '',
 		flownamearr : null
 	});
@@ -337,15 +339,9 @@ function findChild(node){
 		var tagname = node.tagName;
 		var name = node.attributes[i].name;
 		var value = node.attributes[i].value;
-		//console.log(tagname + " "+name );
-		//console.log("test : "+node.data);
 		if(node.childNodes.length == 1){
 			node_attr[tagname+"_value"]=node.childNodes[0].data;
 		}
-		/*if(tagname=="subject"){
-			console.log("childNodes : "+node.childNodes.length);
-			console.log(node);
-		}*/
 		node_attr[tagname+"_"+name] = value;
 	}
 	if(node.tagName == 'verb'){
@@ -400,6 +396,7 @@ function activator_parser(node){
 	
 	return ret;
 }
+
 /*
  * Convert Button
  */
@@ -423,10 +420,12 @@ exports.xmlparse = function(req, res){//xml to svg
 	node_attr={};
 	//console.log(getActivator[0].childNodes[3].childNodes[3].childNodes[1].childNodes[3]);
 	node_attr={};
+	var node_obj=[];
 	for(var node_dom_count=0 ; node_dom_count<node_dom.length ; node_dom_count++){
 		findChild(node_dom[node_dom_count]);
 		nodelist.push(node_attr);
 		node_attr={};
+		node_obj.push(activator_parser(node_dom[node_dom_count]));
 	}
 	var flowname=[];
 	for(var i=0;i<getflow.length;i++){
@@ -447,6 +446,7 @@ exports.xmlparse = function(req, res){//xml to svg
 		xml : area,
 		flow : flow,
 		node : nodelist,
+		node_inf : node_obj,
 		activator : activator,
 		flownamearr : flowname
 	});

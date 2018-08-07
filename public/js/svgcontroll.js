@@ -618,24 +618,38 @@ function object_select_f(){
 		"object_value" : $("#object_select option:selected").text()
 	});
 }
+function deep_mo(a){
+	var i = new Number(a);
+	return i;
+}
 var dep_arr = Array(5);
-
+var root_obj;
 function node_dfs(obj,depth){
+	console.log(JSON.stringify(obj));
+	
+	//여기서 for문 attr 추가하면서 loop돌아줘야함
+	//각 태그별로 어떤 속성이 있는지 dictionary 필요
+	
 	for(var i = 0;i<obj.childNodes.length;i++){
+		console.log(obj.childNodes[i].tagname);
+		console.log(i);
 		if(obj.childNodes[i]){//childNodes가 유효한지
 			dep_arr[depth] = i;
-			var str='#'+obj[dep_arr[0]].tagname;
+			var str='#'+root_obj.childNodes[dep_arr[0]].tagname;
 			str+='_div'
-			for(var i = 1;i<depth+1;i++){
-				str += ' [data-value=';
-				str+=String(dep_arr[i]);
-				str+=']'
+			for(var j = 1;j<depth+1;j++){
+				str += ' > [data-value=';
+				str+=String(dep_arr[j-1]);
+				str+=']';
 			}
 			
+			console.log(str);
 			//childNode의 div추가
 			$(str).append($('<div/>',{
-				'data-value':i
+				'data-value':i,
+				'data-tagname':obj.childNodes[i].tagname
 			}));
+			node_dfs(obj.childNodes[i],depth+1);
 		}
 	}
 }
@@ -664,7 +678,8 @@ function parseDataById(id_val){
 	$('#attr').append($('<div/>',{
 		id:'invoke_div'
 	}));
-	node_dfs(id_val,0);
+	root_obj = node_obj[id_val];
+	node_dfs(node_obj[id_val],0);
 	
 }
 function parseData(data){
@@ -1199,7 +1214,7 @@ function drawLinef(start,end,ptid){
 	console.log(start + ' ' + end);
 	
 	//node_obj update
-	if(node_obj[start].tagname=='flow'){
+	/*if(node_obj[start].tagname=='flow'){
 		dfs_parent(node_obj[end], node_obj[start]);
 	}
 	else{//node
@@ -1207,7 +1222,7 @@ function drawLinef(start,end,ptid){
 		if(node_obj[start].parent){
 			dfs_parent(node_obj[end], node_obj[start].parent);
 		}
-	}
+	}*/
 	
 	var pathnum;
 	if(ptid){
@@ -1574,6 +1589,7 @@ function findNode(arr,nodename,num){
 }
 
 if(flow){
+	node_obj = node_inf;
 	rectarr[0][0]=1;
 	//console.log(flowname);
 	var line_queue=[];
