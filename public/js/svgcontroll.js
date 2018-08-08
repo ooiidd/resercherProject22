@@ -62,7 +62,7 @@ function new_node(tagname){
 function createLinkNode(){
 	var ret = {};
 	ret['childNodes']=[];
-	ret['attr']={};
+	ret['attributes']={};
 	ret['tagname']='node';
 	ret['link']=[];
 	ret['parent']=null;
@@ -80,7 +80,7 @@ function addLink(node,node2){
 function createNode(tagname){
 	var ret = {};
 	ret['childNodes']=[];
-	ret['attr']={};
+	ret['attributes']={};
 	ret['tagname']=tagname;
 	ret['link']=[];
 	ret['parent']=null;
@@ -100,7 +100,7 @@ function addChildNode(node,node2){
 function addNode(node,child_tagname){
 	var child={};
 	child['childNodes']=[];
-	child['attr']={};
+	child['attributes']={};
 	child['tagname']=child_tagname;
 	child['parent']=node;
 	node.childNodes.push(child);
@@ -624,15 +624,56 @@ function deep_mo(a){
 }
 var dep_arr = Array(5);
 var root_obj;
+var node_attr = {
+		node : ['name','state'],
+		message : ['name'],
+		part : ['name','type','element'],
+		variabe : ['name','type'],
+		initialize : ['part'],
+		from : ['expression','variable','part'],
+		wait : ['joinCondition'],
+		condition : ['expression'],
+		'case' : ['name','expression'],
+		event : ['operation'],
+		context : ['name','priority'],
+		rule : ['name','expression'],
+		constraint : ['name'],
+		subject : ['type','value'],
+		verb : ['value'],
+		object : ['type','value'],
+		invoke : ['operation','subflow']
+};
+
 function node_dfs(obj,depth){
 	console.log(JSON.stringify(obj));
 	
 	//여기서 for문 attr 추가하면서 loop돌아줘야함
-	//각 태그별로 어떤 속성이 있는지 dictionary 필요
+	var attr_html = '<table>';
+	for(var i=0;i<node_attr[obj.tagname].length;i++){
+		var temp_str = '';
+		if(obj.attributes[node_attr[obj.tagname][i]]){
+			temp_str = obj.attributes[node_attr[obj.tagname][i]];
+		}
+		attr_html = attr_html + '<tr><td><span>' + node_attr[obj.tagname][i] +'</span></td>';
+		attr_html = attr_html + '<td><input class="input" type="text" value="'+temp_str+'"></input></td></tr>';
+	}
+	attr_html += '</table>';
+	var str = '#attr';
+	if(depth > 0){
+		str += (' > #'+root_obj.childNodes[dep_arr[0]].tagname);
+		str+='_div';
+		for(var i = 1 ; i<depth+1;i++){
+			str+= ' > [data-value=';
+			str+= String(dep_arr[i-1]);
+			str+= ']';
+		}
+		$(str).append(attr_html);
+	}
+	else{
+		$(str).prepend(attr_html);
+	}
 	
 	for(var i = 0;i<obj.childNodes.length;i++){
-		console.log(obj.childNodes[i].tagname);
-		console.log(i);
 		if(obj.childNodes[i]){//childNodes가 유효한지
 			dep_arr[depth] = i;
 			var str='#'+root_obj.childNodes[dep_arr[0]].tagname;
@@ -643,12 +684,12 @@ function node_dfs(obj,depth){
 				str+=']';
 			}
 			
-			console.log(str);
 			//childNode의 div추가
 			$(str).append($('<div/>',{
 				'data-value':i,
 				'data-tagname':obj.childNodes[i].tagname
 			}));
+			console.log('생성 : '+str+' > '+i);
 			node_dfs(obj.childNodes[i],depth+1);
 		}
 	}
@@ -659,6 +700,7 @@ function parseDataById(id_val){
 	}
 	var obj = node_obj[id_val];
 	$('#attr').empty();
+	$('#attr').append($('<hr>'));
 	$('#attr').append($('<div/>',{
 		id:'message_div'
 	}));
