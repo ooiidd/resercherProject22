@@ -28,7 +28,7 @@ exports.ajax1 = function(req,res){
 	
 	if(req.body.subject)
 		console.log(req.body.subject);
-	var eurl = "http://203.253.23.38:8180/subjects";
+	var eurl = "http://203.253.23.29:8180/subjects";
 	if(req.query.subject)
 		eurl=eurl+"?subject="+req.query.subject;
 	if(req.query.predicate)
@@ -57,7 +57,7 @@ exports.ajax2 = function(req,res){
 	console.log("ajax2 요청");
 	if(req.body.subject)
 		console.log(req.body.subject);
-	var eurl = "http://203.253.23.38:8180/predicates";
+	var eurl = "http://203.253.23.29:8180/predicates";
 	if(req.query.subject)
 		eurl=eurl+"?subject="+req.query.subject;
 	if(req.query.predicate)
@@ -87,7 +87,7 @@ exports.ajax3 = function(req,res){
 	console.log("ajax3 요청");
 	if(req.body.subject)
 		console.log(req.body.subject);
-	var eurl = "http://203.253.23.38:8180/objects";
+	var eurl = "http://203.253.23.29:8180/objects";
 	if(req.query.subject)
 		eurl=eurl+"?subject="+req.query.subject;
 	if(req.query.predicate)
