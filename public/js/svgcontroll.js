@@ -3,6 +3,7 @@ var test = document.getElementById("test2");
 
 var row,col;
 var currentRect=null;
+var currentNode_obj=null;
 var prevRect = null;
 var currentoverRect=null;
 var rectid=0;
@@ -641,7 +642,8 @@ var node_attr = {
 		subject : ['type','value'],
 		verb : ['value'],
 		object : ['type','value'],
-		invoke : ['operation','subflow']
+		invoke : ['operation','subflow'],
+		flow:['name']
 };
 
 function node_dfs(obj,depth){
@@ -689,16 +691,71 @@ function node_dfs(obj,depth){
 				'data-value':i,
 				'data-tagname':obj.childNodes[i].tagname
 			}));
+			str+=' > [data-value=';
+			str+=String(i);
+			str+=']';
+			addBtn($(str),obj.childNodes[i].tagname);
 			console.log('생성 : '+str+' > '+i);
 			node_dfs(obj.childNodes[i],depth+1);
 		}
+	}
+}
+function generateAddBtn(name){
+	var str = '<button class="addBtn" type="button" data-name="'+name+'">Add '+name+'</button>';
+	try{
+		return str;
+	}
+	finally{
+		str = null;
+	}
+}
+function generateDelBtn(name){
+	var str = '<button class="delBtn" type="button" data-name="'+name+'">Del '+name+'</button>';
+	try{
+		return str;
+	}
+	finally{
+		str = null;
+	}
+}
+var tagChild = {
+	message : 'part',
+	variable : 'initialize',
+	rule : 'constraint',
+	'case' : 'event',
+	context : 'rule'
+}
+function addBtn(dom,tagname){
+	//button
+	var str = '';
+	//add와 del
+	//delete this add child
+	if(tagname == 'message' || tagname=='variable' || tagname=='rule'){
+		str = generateAddBtn(tagChild[tagname]);
+		str += generateDelBtn(tagname);
+	}
+	//del만
+	else if(tagname=='part' || tagname=='initialize' || tagname=='wait' || tagname=='event'
+		|| tagname=='constraint' || tagname=='invoke'){
+		str = generateDelBtn(tagname);
+	}
+	//add만
+	else if(tagname=='case' || tagname=='context'){
+		str = generateAddBtn(tagChild[tagname]);
+	}
+	
+	if(str ==''){
+		
+	}
+	else{
+		$(dom).append(str);
 	}
 }
 function parseDataById(id_val){
 	for(var i =0;i<5;i++){
 		dep_arr[i]=0;
 	}
-	var obj = node_obj[id_val];
+	var obj = currentNode_obj;
 	$('#attr').empty();
 	$('#attr').append($('<hr>'));
 	$('#attr').append($('<div/>',{
@@ -720,10 +777,44 @@ function parseDataById(id_val){
 	$('#attr').append($('<div/>',{
 		id:'invoke_div'
 	}));
-	root_obj = node_obj[id_val];
-	node_dfs(node_obj[id_val],0);
+
+	$('#message_div').append(generateAddBtn('message'));
+	$('#variable_div').append(generateAddBtn('variable'));
+	$('#wait_div').append(generateAddBtn('wait'));
+	$('#invoke_div').append(generateAddBtn('invoke'));
+	root_obj = currentNode_obj;
+	node_dfs(currentNode_obj,0);
+	
 	
 }
+$('#attr').on('click','.addBtn',function(){
+	console.log($(this).attr('data-name'));
+	console.log($(this).parent().attr('data-value'));
+	var parent = $(this).parent();
+	var stack=[];
+	while(typeof(parent.attr('data-value')) != 'undefined'){
+		stack.push(Number(parent.attr('data-value')));
+	}
+	stack.reverse();
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length;i++){
+		node = node.childNodes[stack[i]];
+	}
+	node.childNodes.push(createNode($(this).attr('data-name')));
+	var value = node.childNodes.length-1;
+	
+	$(this).parent().append($('<div/>',{
+		'data-value':value,
+		'data-tagname':$(this).attr('data-name')
+	}));
+	
+	$(this).parent().
+	
+	value = null;
+	node = null;
+	parent = null;
+	stack = null;
+});
 function parseData(data){
 	$('#attr').empty();
 	$('#nodediv').remove();
@@ -927,7 +1018,6 @@ var move = function(dx,dy,x,y,event){
 
 //rect drag 리스너중 start(mouse down 발생시)리스너
 var start = function(){
-	//console.log("start");
 	activator_rect.attr({
 		stroke: "#000",
 		strokeWidth:1
@@ -949,11 +1039,17 @@ var start = function(){
 			strokeWidth: 3
 		});
 		
+		for(var i=0;i<node_obj.length;i++){
+			if(node_obj[i].attributes.name == currentRect.attr('nodename')){
+				currentNode_obj = node_obj[i];
+				parseDataById(1);
+				break;
+			}
+		}
 		//노드 정보를 오른쪽에 표시해줌.
-		var id_val = this.children()[0].attr('id');
-		parseDataById(Number(id_val));
 		//parseData(this);
 	}
+	
 	if(prevRect&&line_drawing){//FindRectf(findRectArr,ret)
 		drawLinef(FindRectf(findRectArr,prevRect.attr("nodename")),FindRectf(findRectArr,currentRect.attr("nodename")));
 		
@@ -1205,6 +1301,7 @@ $('#addflow').click(function(){
 	rectarr[temp_col][temp_row] = addrect(temp_col*200+25,temp_row*80+15,150,50,temp_name);
 	findRectArr.push({name:temp_name,col:temp_col,row:temp_row});
 	node_obj.push(createNode('flow'));
+	node_obj[node_obj.length-1].attributes.name = temp_name;
 	flow_obj[node_obj.length-1] = node_obj[node_obj.length-1];
 });
 //AddRect 버튼 클릭 리스너
@@ -1232,6 +1329,7 @@ $("#addrect").click(function(){
 	rectarr[temp_col][temp_row] = addrect(temp_col*200+25,temp_row*80+15,150,50,temp_name);
 	findRectArr.push({name:temp_name,col:temp_col,row:temp_row});
 	node_obj.push(createNode('node'));
+	node_obj[node_obj.length-1].attributes.name = temp_name;
 });
 //flow값(렌더링 할 값이 있으면) 렌더링 해줘야함.
 
