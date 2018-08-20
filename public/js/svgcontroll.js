@@ -629,7 +629,7 @@ var node_attr = {
 		node : ['name','state'],
 		message : ['name'],
 		part : ['name','type','element'],
-		variabe : ['name','type'],
+		variable : ['name','type'],
 		initialize : ['part'],
 		from : ['expression','variable','part'],
 		wait : ['joinCondition'],
@@ -650,6 +650,9 @@ function node_dfs(obj,depth){
 	console.log(JSON.stringify(obj));
 	
 	//여기서 for문 attr 추가하면서 loop돌아줘야함
+	if(obj.tagname == 'documentation'){
+		return ;
+	}
 	var attr_html = '<table>';
 	for(var i=0;i<node_attr[obj.tagname].length;i++){
 		var temp_str = '';
@@ -679,7 +682,7 @@ function node_dfs(obj,depth){
 		if(obj.childNodes[i]){//childNodes가 유효한지
 			dep_arr[depth] = i;
 			var str='#'+root_obj.childNodes[dep_arr[0]].tagname;
-			str+='_div'
+			str+='_div';
 			for(var j = 1;j<depth+1;j++){
 				str += ' > [data-value=';
 				str+=String(dep_arr[j-1]);
@@ -751,6 +754,16 @@ function addBtn(dom,tagname){
 		$(dom).append(str);
 	}
 }
+function addAttribute(dom,tagname){
+	var attr_html = '<table>';
+	console.log(tagname);
+	console.log(node_attr[tagname]);
+	for(var i = 0;i<node_attr[tagname].length ; i++){
+		attr_html = attr_html + '<tr><td><span>'+node_attr[tagname][i]+'</span></td>';
+		attr_html = attr_html + '<td><input class="input" type="text"></input></td></tr>';
+	}
+	$(dom).append(attr_html);
+}
 function parseDataById(id_val){
 	for(var i =0;i<5;i++){
 		dep_arr[i]=0;
@@ -783,10 +796,14 @@ function parseDataById(id_val){
 	$('#wait_div').append(generateAddBtn('wait'));
 	$('#invoke_div').append(generateAddBtn('invoke'));
 	root_obj = currentNode_obj;
+	console.log(currentNode_obj);
 	node_dfs(currentNode_obj,0);
 	
 	
 }
+$('#attr').on('change','.input',function(){
+	
+});
 $('#attr').on('click','.addBtn',function(){
 	console.log($(this).attr('data-name'));
 	console.log($(this).parent().attr('data-value'));
@@ -794,6 +811,7 @@ $('#attr').on('click','.addBtn',function(){
 	var stack=[];
 	while(typeof(parent.attr('data-value')) != 'undefined'){
 		stack.push(Number(parent.attr('data-value')));
+		parent = parent.parent();
 	}
 	stack.reverse();
 	var node = currentNode_obj;
@@ -807,13 +825,33 @@ $('#attr').on('click','.addBtn',function(){
 		'data-value':value,
 		'data-tagname':$(this).attr('data-name')
 	}));
-	
-	$(this).parent().
-	
+	addBtn($(this).parent().children().last(),$(this).attr('data-name'));
+	addAttribute($(this).parent().children().last(),$(this).attr('data-name'));
 	value = null;
 	node = null;
 	parent = null;
 	stack = null;
+});
+$('#attr').on('click','.delBtn',function(){
+	var parent = $(this).parent();
+	var stack=[];
+	while(typeof(parent.attr('data-value')) != 'undefined'){
+		stack.push(Number(parent.attr('data-value')));
+		parent = parent.parent();
+	}
+	stack.reverse();
+	console.log(stack);
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length-1;i++){
+		node = node.childNodes[stack[i]];
+	}
+	node.childNodes[stack[stack.length-1]]=null;
+	//node obj null로
+	node = null;
+	
+	//html 삭제
+	var parent = $(this).parent();
+	parent.remove();
 });
 function parseData(data){
 	$('#attr').empty();
@@ -1041,6 +1079,7 @@ var start = function(){
 		
 		for(var i=0;i<node_obj.length;i++){
 			if(node_obj[i].attributes.name == currentRect.attr('nodename')){
+				console.log(node_obj[i]);
 				currentNode_obj = node_obj[i];
 				parseDataById(1);
 				break;
