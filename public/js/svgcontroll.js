@@ -8,6 +8,7 @@ var prevRect = null;
 var currentoverRect=null;
 var rectid=0;
 var tempcircle=[];
+var currentText = null;
 var tempEllipse=null;
 var path=[];
 var findRectArr=[];//노드를 만들어 주었는지 알기위해 사용하는 String형 배열 indexOf() 메서드로 찾는다.
@@ -801,8 +802,33 @@ function parseDataById(id_val){
 	
 	
 }
-$('#attr').on('change','.input',function(){
-	
+//Prevent enter event
+$('#attr').on('keypress','.input',function(e){
+	if(e.keyCode === 13){
+		return false;
+	}
+});
+//key event on text box
+$('#attr').on('keyup','.input',function(e){
+	console.log(this.value);
+	var text = $(this).parent().parent().children().first().children().first().text();
+	console.log(currentText);
+	currentText.attributes[text] = this.value;
+});
+$('#attr').on('focus','.input',function(){
+	var parent = $(this).parent().parent().parent().parent().parent();
+	var stack=[];
+	while(typeof(parent.attr('data-value')) != 'undefined'){
+		stack.push(Number(parent.attr('data-value')));
+		parent = parent.parent();
+	}
+	stack.reverse();
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length;i++){
+		node = node.childNodes[stack[i]];
+	}
+	currentText = node;
+	console.log('focus');
 });
 $('#attr').on('click','.addBtn',function(){
 	console.log($(this).attr('data-name'));
