@@ -16,7 +16,6 @@ var circleArray=[];
 var pathid=0;
 var currentStartDoc=null;
 var currentOverDoc=null;
-var currentText=null;
 var currentLine=null;
 var node_obj=[];
 var flow_obj={};
@@ -43,7 +42,9 @@ for(var i=0;i<100;i++)
 var arrow = svg.path("M2,2 L2,11 L10,6 L2,2").attr({fill:'#000000'});
 var marker = arrow.marker(0,0,10,10,9,6);
 function textChangef(){
+	console.log(currentText);
 	currentText.node.textContent=$('#nameinput').val();
+	console.log(currentText);
 }
 var line_drawing = false;
 
@@ -149,13 +150,13 @@ function activator_list(){
 	$('#variablediv').append($('<div/>',{
 		id:'conditionContextDiv'
 	}));
-	$('#name').append('<span>Name: </span>');
-	$('#name').append($('<input/>',{
-		type:'text',
-		id: 'nameinput',
-		value : (activator=='' ? '' : activator.attributes.name),
-		onchange:"textChangef()"//수정 필요
-	}));
+//	$('#name').append('<span>Name: </span>');
+//	$('#name').append($('<input/>',{
+//		type:'text',
+//		id: 'nameinput',
+//		value : (activator=='' ? '' : activator.attributes.name),
+//		onchange:"textChangef()"//수정 필요
+//	}));
 
 	var message_add = '<button class="button" type="button" id="messageAdd">Add Message</button>';
 	var variable_add = '<button class="button" type="button" id="variableAdd">Add Variable</button>';
@@ -177,7 +178,7 @@ function activator_list(){
 	//message 태그
 	$('#messageDiv').append('<span>MESSAGE</span>');
 	$('#messageDiv').append(message_add);
-	var message_attr = '<tr><td><span>name</span></td><td><input class="input" type="text"</input></td></tr>';
+	var message_attr = '<tr><td><span>name</span></td><td><input class="activator_input" type="text"</input></td></tr>';
 	$('#messageAdd').click(function(){
 		var html = '<div data-value="'+activator.childNodes.length+'" ';
 		html += 'data-tagname="'+'message'+'">'
@@ -190,9 +191,9 @@ function activator_list(){
 		activator['childNodes'].push(new_node('message'));
 	});
 	
-	var part_attr = '<table>'+part_del+'<tr><td><span>name</span></td><td><input class="input" type="text"></input></td></tr>';
-	part_attr += '<tr><td><span>type</span></td><td><input class="input" type="text"></input></td></tr>';
-	part_attr += '<tr><td><span>element</span></td><td><input class="input" type="text"></input></td></tr></table></div>'
+	var part_attr = '<table>'+part_del+'<tr><td><span>name</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	part_attr += '<tr><td><span>type</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	part_attr += '<tr><td><span>element</span></td><td><input class="activator_input" type="text"></input></td></tr></table></div>'
 	$("#messageDiv").on("click",".partAdd",function(){
 		//console.log(activator.childNodes[Number($(this).parent().attr('data-value'))]);
 		$(this).parent().append('<div data-value="'+activator.childNodes[Number($(this).parent().attr('data-value'))].childNodes.length+'" '+
@@ -207,8 +208,8 @@ function activator_list(){
 	$('#variableDiv').append('<hr>');
 	$('#variableDiv').append('<span>VARIABLE</span>');
 	$('#variableDiv').append(variable_add);
-	var variable_attr = '<tr><td><span>name</span></td><td><input class="input" type="text"</input></td></tr>';
-	variable_attr += '<tr><td><span>type</span></td><td><input class="input" type="text"</input></td></tr>';
+	var variable_attr = '<tr><td><span>name</span></td><td><input class="activator_input" type="text"</input></td></tr>';
+	variable_attr += '<tr><td><span>type</span></td><td><input class="activator_input" type="text"</input></td></tr>';
 	$('#variableAdd').click(function(){
 		var html = '<div data-value="'+activator.childNodes.length+'" '
 		+'data-tagname="variable">'+'<table>';
@@ -221,10 +222,10 @@ function activator_list(){
 	});
 	
 	var initialize_attr = '<table>'+initialize_del+'<tr><td><span>part</span></td>';
-	initialize_attr += '<td><input class="input" type="text"</input></td></tr>';
-	initialize_attr += '<tr><td><span>from expression</span></td><td><input class="input" type="text"></input><br></td></tr>';
-	initialize_attr += '<tr><td><span>from variable</span></td><td><input class="input" type="text"></input><br></td></tr>';
-	initialize_attr += '<tr><td><span>from part</span></td><td><input class="input" type="text"></input></td></tr></table></div>';
+	initialize_attr += '<td><input class="activator_input" type="text"</input></td></tr>';
+	initialize_attr += '<tr><td><span>from expression</span></td><td><input class="activator_input" type="text"></input><br></td></tr>';
+	initialize_attr += '<tr><td><span>from variable</span></td><td><input class="activator_input" type="text"></input><br></td></tr>';
+	initialize_attr += '<tr><td><span>from part</span></td><td><input class="activator_input" type="text"></input></td></tr></table></div>';
 	$("#variableDiv").on("click",".initializeAdd",function(){
 		$(this).parent().append('<div data-value="'+activator.childNodes[Number($(this).parent().attr('data-value'))].childNodes.length+'" '+
 				'data-tagname="initialize">'+initialize_attr);
@@ -237,12 +238,12 @@ function activator_list(){
 	$('#activateDiv').append('<hr>');
 	if(activate.attributes){
 		var activate_attr = '<div data-tagname="activate"><table><span>ACTIVATE</span><tr><td><span>flow</span></td>';
-		activate_attr += '<td><input class="input" type="text" value="'+activate.attributes.flow+'"></input></td></tr></table></div>';
+		activate_attr += '<td><input class="activator_input" type="text" value="'+activate.attributes.flow+'"></input></td></tr></table></div>';
 		$('#activateDiv').append(activate_attr);
 	}
 	else{
 		var activate_attr = '<div data-tagname="activate"><table><span>ACTIVATE</span><tr><td><span>flow</span></td>';
-		activate_attr += '<td><input class="input" type="text" value=\"\"></input></td></tr></table></div>';
+		activate_attr += '<td><input class="activator_input" type="text" value=\"\"></input></td></tr></table></div>';
 		$('#activateDiv').append(activate_attr);
 	}
 	//$('#conditiondiv').append('<span>condition expression: </span>');
@@ -252,23 +253,23 @@ function activator_list(){
 	$('#conditionDiv').append('<hr>');
 	if(condition.attributes){
 		var condition_attr = '<div data-tagname="condition"><table><span>CONDITION</span>';
-		condition_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text" value="'+condition.attributes.expression+'"></input></td></tr></table></div>'
+		condition_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text" value="'+condition.attributes.expression+'"></input></td></tr></table></div>'
 		$('#conditionDiv').append(condition_attr);
 	}
 	else{
 		var condition_attr = '<div data-tagname="condition"><table><span>CONDITION</span>';
-		condition_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text" value=\"\"></input></td></tr></table></div>'
+		condition_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text" value=\"\"></input></td></tr></table></div>'
 		$('#conditionDiv').append(condition_attr);
 	}
 	
 	//condition case태그
 	var case_attr = '<div data-tagname="case"><table><span>CONDITION-CASE</span>';
-	case_attr += '<tr><td><span>name</span></td><td><input class="input" type="text"></input></td></tr>';
-	case_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text"></input></td></tr>';
+	case_attr += '<tr><td><span>name</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	case_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text"></input></td></tr>';
 	$('#conditionCaseDiv').append('<hr>');
 	$('#conditionCaseDiv').append(case_attr);
 	$('#conditionCaseDiv').append(event_add);
-	var event_attr = '<tr><td><span>operation</span></td><td><input class="input" type="text"></input></td></tr>';
+	var event_attr = '<tr><td><span>operation</span></td><td><input class="activator_input" type="text"></input></td></tr>';
 	$('#eventAdd').click(function(){
 		var html='<div data-value="'+con_case.childNodes.length+'" '
 		+'data-tagname="event">'+'<table>';
@@ -288,13 +289,13 @@ function activator_list(){
 	$('#conditionContextDiv').append('<hr>');
 	var context_attr = '<div data-tagname="context"><table><span>CONDITION-CONTEXT</span>';
 	context_attr += '<tr><td><span>name</span></td>';
-	context_attr += '<td><input class="input" type="text"></input></td></tr>';
+	context_attr += '<td><input class="activator_input" type="text"></input></td></tr>';
 	context_attr += '<tr><td><span>priority</span></td>';
-	context_attr += '<td><input class="input" type="text"></input></td></tr></table></div>';
+	context_attr += '<td><input class="activator_input" type="text"></input></td></tr></table></div>';
 	$('#conditionContextDiv').append(context_attr);
 	$('#conditionContextDiv').append(rule_add);
-	var rule_attr = '<tr><td><span>name</span></td><td><input class="input" type="text"></input></td></tr>';
-	rule_attr += '<tr><td><span>expression</span></td><td><input class="input" type="text"></input></td></tr>';
+	var rule_attr = '<tr><td><span>name</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	rule_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text"></input></td></tr>';
 	$('#ruleAdd').click(function(){
 		var html='<div data-value="'+context.childNodes.length+'" '
 		+'data-tagname="rule">'+'<table>';
@@ -306,17 +307,17 @@ function activator_list(){
 		context['childNodes'].push(new_node('rule'));
 	});
 	var constraint_attr = '<table>'+constraint_del+'<tr><td><span>name</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr>';
 	constraint_attr+='<tr><td><span>subject type</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr>';
 	constraint_attr+='<tr><td><span>subject value</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr>';
 	constraint_attr+='<tr><td><span>verb</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr>';
 	constraint_attr+='<tr><td><span>object type</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr>';
 	constraint_attr+='<tr><td><span>object value</span></td>';
-	constraint_attr+='<td><input class="input" type="text"></input></td></tr></table></div>';
+	constraint_attr+='<td><input class="activator_input" type="text"></input></td></tr></table></div>';
 	$("#conditionContextDiv").on("click",".constraintAdd",function(){
 		$(this).parent().append('<div data-value="'+context.childNodes[Number($(this).parent().attr('data-value'))].childNodes.length+'" '+
 				'data-tagname="constraint">'+constraint_attr);
@@ -367,7 +368,7 @@ function activator_list(){
 		}
 		$(this).parent().remove();
 	});
-	$("#attr").on("change",".input",function(){
+	$("#attr").on("change",".activator_input",function(){
 		var attr_name = $(this).parent().parent().children().first().children().first().text();
 		//console.log(attr_name);
 		var num = $(this).parent().parent().parent().parent().parent().attr('data-value');
@@ -379,136 +380,23 @@ function activator_list(){
 		//태그 이름으로 추출 시작
 		var bool = true;
 		if(tagname == 'message' || tagname=='variable'){
-			for(var i in activator.childNodes[num].attributes){
-				for(var key in activator.childNodes[num].attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						activator.childNodes[num].attributes[i][key]=value;
-						//console.log(activator.childNodes[num].attributes[i][key]);
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				activator.childNodes[num].attributes.push(temp);
-			}
+				activator.childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'part' || tagname=='initialize'){
-			for(var i in activator.childNodes[num2].childNodes[num].attributes){
-				for(var key in activator.childNodes[num2].childNodes[num].attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						activator.childNodes[num2].childNodes[num].attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				activator.childNodes[num2].childNodes[num].attributes.push(temp);
-			}
+				activator.childNodes[num2].childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'activate'){
-			//console.log('acti or condi');
-			for(var i in activate.attributes){
-				for(var key in activate.attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						activate.attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				activate.attributes.push(temp);
-			}
+				activate.attributes[attr_name] = value;
 		}else if(tagname == 'condition'){
-			//console.log('acti or condi');
-			for(var i in condition.attributes){
-				for(var key in condition.attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						condition.attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				condition.attributes.push(temp);
-			}
+				condition.attributes[attr_name] = value;
 		}else if(tagname == 'case'){
-			for(var i in con_case.attributes){
-				for(var key in con_case.attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						con_case.attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				con_case.attributes.push(temp);
-			}
+				con_case.attributes[attr_name] = value;
 		}else if(tagname == 'event'){
-			for(var i in con_case.childNodes[num].attributes){
-				for(var key in con_case.childNodes[num].attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						con_case.childNodes[num].attributes[i][key]=value;
-						//console.log(con_case.childNodes[num].attributes[i][key]);
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				con_case.childNodes[num].attributes.push(temp);
-			}
+				con_case.childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'context'){
-			for(var i in context.attributes){
-				for(var key in context.attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						context.attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				context.attributes.push(temp);
-			}
+				context.attributes[attr_name] = value;
 		}else if(tagname == 'rule'){
-			for(var i in context.childNodes[num].attributes){
-				for(var key in context.childNodes[num].attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						context.childNodes[num].attributes[i][key]=value;
-						//console.log(context.childNodes[num].attributes[i][key]);
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				context.childNodes[num].attributes.push(temp);
-			}
+				context.childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'constraint'){
-			for(var i in context.childNodes[num2].childNodes[num].attributes){
-				for(var key in context.childNodes[num2].childNodes[num].attributes[i]){
-					if(key == attr_name){
-						bool = false;
-						context.childNodes[num2].childNodes[num].attributes[i][key]=value;
-					}
-				}
-			}
-			if(bool){
-				var temp = {};
-				temp[attr_name]=value;
-				context.childNodes[num2].childNodes[num].attributes.push(temp);
-			}
+				context.childNodes[num2].childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'activator'){
 			
 		}
@@ -815,20 +703,26 @@ $('#attr').on('keyup','.input',function(e){
 	console.log(currentText);
 	currentText.attributes[text] = this.value;
 });
+
+//currentText 설정
 $('#attr').on('focus','.input',function(){
 	var parent = $(this).parent().parent().parent().parent().parent();
-	var stack=[];
-	while(typeof(parent.attr('data-value')) != 'undefined'){
-		stack.push(Number(parent.attr('data-value')));
-		parent = parent.parent();
+	if(currentNode_obj.tagname == 'node'){
+		var stack=[];
+		while(typeof(parent.attr('data-value')) != 'undefined'){
+			stack.push(Number(parent.attr('data-value')));
+			parent = parent.parent();
+		}
+		stack.reverse();
+		var node = currentNode_obj;
+		for(var i=0;i<stack.length;i++){
+			node = node.childNodes[stack[i]];
+		}
+		currentText = node;
 	}
-	stack.reverse();
-	var node = currentNode_obj;
-	for(var i=0;i<stack.length;i++){
-		node = node.childNodes[stack[i]];
+	else if(currentNode_obj.tagname=='flow'){
+		console.log('flow');
 	}
-	currentText = node;
-	console.log('focus');
 });
 $('#attr').on('click','.addBtn',function(){
 	console.log($(this).attr('data-name'));
