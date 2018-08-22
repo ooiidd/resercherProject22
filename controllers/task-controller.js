@@ -218,11 +218,15 @@ exports.toxml = function(req,res){
 		temp.name = String(gTag[i].childNodes[0].attributes[4].value);
 		gArray.push(temp);
 	}
-	//console.log((rectArray));
 	
-	console.log(req.body.node_obj);
+	//baseOntologies Tag generate 해주는 부분.
+	
+	//serviceProvider Tag generate 해주는 부분.
+	
+	//Activator Tag generate 해주는 부분.
+	
+	//Flow Tag generate 해주는 부분.
 	var node_obj = JSON.parse(req.body.node_obj);
-	console.log(node_obj);
 	generateFlow(node_obj);
 	
 	
