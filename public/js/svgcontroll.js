@@ -1115,7 +1115,38 @@ var start = function(){
 		//parseData(this);
 	}
 	
+	//Add Line 선을 그려줄때 end포인트 찍을때 발생함.
 	if(prevRect&&line_drawing){//FindRectf(findRectArr,ret)
+		var prev_obj,cur_obj;
+		for(var i =0;i<node_obj.length;i++){
+			if(node_obj[i].attributes.name == prevRect.attr('nodename')){
+				prev_obj = node_obj[i];
+			}
+			else if(node_obj[i].attributes.name == currentRect.attr('nodename')){
+				cur_obj = node_obj[i];
+			}
+		}
+		console.log(prev_obj);
+		console.log(cur_obj);
+		if(prev_obj.tagname == 'node' && prev_obj.parent === null){
+			alert('Flow에 연결이 되어있지 않습니다.');
+			currentRect.attr({
+				stroke:"#000",
+				strokeWidth: 1
+			});
+			var btn=document.getElementById("draw_btn");
+			btn.firstChild.data = "Add Line";
+			$('#attr').empty();
+			line_drawing=false;
+			return;
+		}
+		else if(prev_obj.tagname == 'flow'){
+			cur_obj.parent = prev_obj.attributes.name;
+		}
+		else{
+			cur_obj.parent = prev_obj.parent;
+		}
+		
 		drawLinef(FindRectf(findRectArr,prevRect.attr("nodename")),FindRectf(findRectArr,currentRect.attr("nodename")));
 		
 		currentRect.attr({
@@ -1225,7 +1256,7 @@ var stop = function(){
 		if(rectarr[col_check][row_check]){
 			temp_rect.remove();
 			highlight_rect.remove();
-			alert('exist');
+			//alert('exist');
 			return;
 		}
 		//console.log("test2 : "+currentRect.type);

@@ -110,11 +110,83 @@ exports.ajax3 = function(req,res){
 		}
 	});
 }
+function flowTag(obj){
+	//tag name Start
+	var temp;
+	temp = '<'+obj.tagname;
+	
+	//attributes
+	for(var key in obj.attributes){
+		temp = temp+ ' '+key + '="' + obj.attributes[key] + '" '
+	}
+	temp+='>\n';
+	return temp;
+}
+function generateNode(obj){
+	//tag name Start
+	var temp = '<'+obj.tagname;
+	
+	//attributes
+	for(var key in obj.attributes){
+		temp = temp + ' ' + key + '="' + obj.attributes[key] + '"'
+		
+	}
+	temp+='>\n';
+	
+	//next node (childNodes)
+	for(var i=0;i<obj.childNodes.length;i++){
+		//childNodes가 유효한지
+		if(obj.childNodes[i]){
+			temp += generateNode(obj.childNodes[i]);
+		}
+	}
+	
+	//tag name End
+	temp = temp+'</'+obj.tagname+'>';
+	return temp;
+}
+function generateFlow(obj){
+	//flow 개수 찾음
+	var cnt = 0;
+	var flowDic= {};
+	for(var i =0;i<obj.length;i++){
+		console.log(flowDic[obj[i].attributes.name]);
+		console.log(obj[i].tagname);
+		if(obj[i].tagname == 'flow' && typeof flowDic[obj[i].attributes.name]=='undefined'){
+			console.log('flow && undefined');
+			flowDic[obj[i].attributes.name] = cnt;
+			cnt++;
+		}
+	}
+	
+	console.log("dic : "+JSON.stringify(flowDic));
+	console.log(cnt);
+	
+	var str = new Array(cnt);
+	//str 초기화
+	for(var i =0 ;i<str.length;i++){
+		str[i] = '';
+	}
+	//obj 돌면서 <node> 채워줌.
+	for(var i=0;i<obj.length;i++){
+		if(obj[i].tagname == 'node'){
+			str[flowDic[obj[i].parent]] += generateNode(obj[i]);
+		}
+		else{//flow
+			str[flowDic[obj[i].attributes.name]] = flowTag(obj[i]) + str[flowDic[obj[i].attributes.name]];
+		}
+	}
+	
+	for(var i=0;i<str.length;i++){
+		str[i] += '\n</flow>\n';
+		console.log(str[i]);
+	}
+}
 exports.toxml = function(req,res){
 	var svgArea = req.body.svgtext;
 	var xml = new parser().parseFromString(svgArea,'text/xml');
 	//console.log(xml);
-	console.log('test : '+req.body.activator);
+	//console.log('test : '+req.body.activator);
 	var activator = JSON.parse(req.body.activator);
 	console.log(activator);
 	var gTag = xml.getElementsByTagName('g');
@@ -148,7 +220,10 @@ exports.toxml = function(req,res){
 	}
 	//console.log((rectArray));
 	
-	
+	console.log(req.body.node_obj);
+	var node_obj = JSON.parse(req.body.node_obj);
+	console.log(node_obj);
+	generateFlow(node_obj);
 	
 	
 	
@@ -320,7 +395,7 @@ exports.toxml = function(req,res){
 	
 	res.render('index',{
 		title : 'main',
-		text: linkstr[0].join('\n'),
+		text: '',//linkstr[0].join('\n'),
 		xml : '',
 		flow : '',
 		node : '',
