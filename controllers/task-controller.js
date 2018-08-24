@@ -270,7 +270,9 @@ exports.toxml = function(req,res){
 	//Flow Tag generate 해주는 부분.
 	var node_obj = JSON.parse(req.body.node_obj);
 	str = generateFlow(node_obj);//String Array
-	output_xml += str;
+	for(var i=0;i<str.length;i++){
+		output_xml += str[i];
+	}
 	
 	output_xml += '</CAWL>'
 	
