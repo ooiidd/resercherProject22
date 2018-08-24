@@ -220,7 +220,6 @@ exports.toxml = function(req,res){
 	var baseOntologies = JSON.parse(req.body.base_obj);
 	var serviceProvider = JSON.parse(req.body.service_obj);
 	var activator = JSON.parse(req.body.activator);
-	console.log(activator);
 	var gTag = xml.getElementsByTagName('g');
 	var pathTag = xml.getElementsByTagName('path');
 	var gArray=[];
@@ -286,6 +285,23 @@ exports.toxml = function(req,res){
 	var Source_number=0;
 	var start_node=[];
 	var linkstr=[];
+	
+	/*잠시 보류 -> Convert시 Source Sink가 아닌 flow 표기로 바꿔야함.
+	//gArray에서 flow인 아이를 찾아서 start_node 에 넣음
+	for(var i=0;i<node_obj.length;i++){
+		if(node_obj[i].tagname == 'flow'){
+			for(var j=0;j<gArray.length;j++){
+				if(gArray[j].name.match(node_obj[i].attribute.name)){
+					start_node[Source_number]=gArray[j];
+					gArray.splice(j,1);
+					Source_number++;
+					break;
+				}
+			}
+		}
+	}
+	*/
+	
 	for(var i = 0;i<gArray.length;i++){//Source가 몇개인지 찾음
 		//console.log(gArray[i].name);
 		if(gArray[i].name.match(source_re)){
@@ -590,18 +606,33 @@ exports.xmlparse = function(req, res){//xml to svg
 		node_obj.push(temp_nodedom);
 	}
 	var flowname=[];
+	var source_re = /\S*[Ss]ource/;
+	var sink_re = /\S*[Ss]ink/;
+	
 	for(var i=0;i<getflow.length;i++){
 		var getlink = getflow[i].getElementsByTagName('link');
 		flowname.push(getlink[0].parentNode.attributes[0].value);
 		var templink=[];
 		for(var j=0;j<getlink.length;j++){
-			templink.push({
-				'from':getlink[j].attributes[0].value,
-				'to':getlink[j].attributes[1].value
-			});
+			if(getlink[j].attributes[0].value.match(source_re)){
+				templink.push({
+					'from':getflow[i].attributes[0].value,
+					'to':getlink[j].attributes[1].value
+				});
+			}
+			else if(getlink[j].attributes[1].value.match(sink_re)){
+				
+			}
+			else{
+				templink.push({
+					'from':getlink[j].attributes[0].value,
+					'to':getlink[j].attributes[1].value
+				});
+			}
 		}
 		flow.push(templink);
 	}
+	console.log(flow);
 	res.render('index',{
 		title : 'main',
 		text : null,
