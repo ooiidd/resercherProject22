@@ -9,6 +9,8 @@
     	var flowname =<%-JSON.stringify(flownamearr)%>;
     	var activator = <%-JSON.stringify(activator)%>;
     	var node_inf = <%-JSON.stringify(node_inf)%>;
+    	var serviceProvider = <%-JSON.stringify(serviceProvider)%>;
+    	var baseOntologies = <%-JSON.stringify(baseOntologies)%>;
     </script>
     <link rel='stylesheet' href='/stylesheets/newstyle.css' />
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
@@ -44,6 +46,8 @@
 	  		<input type="hidden" name="svgtext" id="svgtext" value="testhidden">
 	  		<input type="hidden" name="activator" id="activator">
 	  		<input type="hidden" name="node_obj" id="node_obj">
+	  		<input type="hidden" name="service_obj" id="service_obj">
+	  		<input type="hidden" name="base_obj" id="base_obj">
 	  		<div style="overflow:scroll" class="attribute_control" id="attr"></div>
   		</div>
   		</form>

@@ -403,9 +403,25 @@ function activator_list(){
 	});
 }
 
+//click event 초기화
+function reset_rect(){
+	activator_rect.attr({
+		stroke: '#000',
+		strokeWidth: 1
+	});
+	baseOntologies_rect.attr({
+		stroke: '#000',
+		strokeWidth: 1
+	});
+	serviceProvider_rect.attr({
+		stroke: '#000',
+		strokeWidth: 1
+	});
+}
 //Activator Click 리스너
 function activator_click(){
 	//console.log("acti");
+	reset_rect();
 	if(currentRect != null){
 		currentRect.attr({
 			stroke : "#000",
@@ -419,6 +435,7 @@ function activator_click(){
 	});
 	activator_list();
 }
+
 //처음에 Activator 만들어 주어야함
 var activator_rect=svg.rect(25,15,150,50);
 activator_rect.attr({
@@ -428,6 +445,62 @@ activator_rect.attr({
 });
 activator_rect.click(activator_click);
 var activator_text = svg.text(25+50,15+28,"Activator");
+
+//클릭 리스너
+function baseOntologies_click(){
+	reset_rect();
+	currentNode_obj = baseOntologies;
+	if(currentRect != null){
+		currentRect.attr({
+			stroke : "#000",
+			strokeWidth : 1
+		});
+	}
+	
+	currentRect = null;
+	baseOntologies_rect.attr({
+		stroke: "#00bfff",
+		strokeWidth: 3
+	});
+	
+	parseDataByName('baseOntologies');
+}
+function serviceProvider_click(){
+	reset_rect();
+	currentNode_obj = serviceProvider;
+	if(currentRect != null){
+		currentRect.attr({
+			stroke : "#000",
+			strokeWidth : 1
+		});
+	}
+	currentRect = null;
+	serviceProvider_rect.attr({
+		stroke: "#00bfff",
+		strokeWidth: 3
+	});
+	parseDataByName('serviceProvider');
+}
+//baseOntologies
+var baseOntologies_rect = svg.rect(225,15,150,50);
+baseOntologies_rect.attr({
+	stroke:"#000",
+	strokeWidth: 1,
+	fill:"#ffffff"
+});
+var baseOntologies_text = svg.text(225+20,15+28,"BaseOntologies");
+baseOntologies_rect.click(baseOntologies_click);
+
+//serviceProvider
+var serviceProvider_rect = svg.rect(425,15,150,50);
+serviceProvider_rect.attr({
+	stroke:"#000",
+	strokeWidth: 1,
+	fill:"#ffffff"
+});
+var serviceProvider_text = svg.text(425+22,15+28,"serviceProvider");
+serviceProvider_rect.click(serviceProvider_click);
+
 //Add Line 버튼 클릭 리스너
 function draw_click(){
 	if(currentRect){
@@ -532,13 +605,69 @@ var node_attr = {
 		verb : ['value'],
 		object : ['type','value'],
 		invoke : ['operation','subflow'],
-		flow:['name']
+		flow:['name'],
+		baseOntologies:[],
+		ontology:['location','namespace'],
+		serviceProvider : ['name','location'],
+		service: ['operation'],
+		providerParent : []
 };
-
+//Ontologies, serviceProvider 등을 위한 dfs
+function attr_dfs(obj,depth){
+	if(obj.tagname == 'documentation'){
+		return ;
+	}
+	var attr_html = '<table>';
+	console.log(obj);
+	for(var i=0;i<node_attr[obj.tagname].length;i++){
+		var temp_str = '';
+		if(obj.attributes[node_attr[obj.tagname][i]]){
+			temp_str = obj.attributes[node_attr[obj.tagname][i]];
+		}
+		attr_html = attr_html + '<tr><td><span>' + node_attr[obj.tagname][i] + '</span></td>';
+		attr_html = attr_html + '<td><input class="input" type="text" value="'+temp_str+'"></input></td></tr>';
+	}
+	attr_html += '</table>';
+	var str = '#attr';
+	if(depth > 0){
+		for(var i =0 ; i<depth;i++){
+			str+= ' > [data-value=';
+			str+= String(dep_arr[i]);
+			str+= ']';
+		}
+		$(str).append(attr_html);
+	}
+	else{
+		$(str).prepend(attr_html);
+	}
+	for(var i=0;i<obj.childNodes.length;i++){
+		if(obj.childNodes[i]){
+			dep_arr[depth]=i;
+			var str = '#attr';
+			for(var j=0;j<depth;j++){
+				str+=' > [data-value=';
+				str+=String(dep_arr[j]);
+				str+=']';
+			}
+			
+			//childNode의 div추가
+			$(str).append($('<div/>',{
+				'data-value':i,
+				'data-tagname':obj.childNodes[i].tagname
+			}));
+			str+=' > [data-value=';
+			str+=String(i);
+			str+=']';
+			addBtn($(str),obj.childNodes[i].tagname);
+			attr_dfs(obj.childNodes[i],depth+1);
+		}
+	}
+}
+//Node 태그 dfs
 function node_dfs(obj,depth){
 	console.log(JSON.stringify(obj));
 	
-	//여기서 for문 attr 추가하면서 loop돌아줘야함
+	//여기서 for문 attr 추가하면서 loop돌아줌
 	if(obj.tagname == 'documentation'){
 		return ;
 	}
@@ -615,20 +744,20 @@ var tagChild = {
 	variable : 'initialize',
 	rule : 'constraint',
 	'case' : 'event',
-	context : 'rule'
+	context : 'rule',
+	serviceProvider : 'service'
 }
 function addBtn(dom,tagname){
 	//button
 	var str = '';
 	//add와 del
-	//delete this add child
-	if(tagname == 'message' || tagname=='variable' || tagname=='rule'){
+	if(tagname == 'message' || tagname=='variable' || tagname=='rule'|| tagname=='serviceProvider'){
 		str = generateAddBtn(tagChild[tagname]);
 		str += generateDelBtn(tagname);
 	}
 	//del만
 	else if(tagname=='part' || tagname=='initialize' || tagname=='wait' || tagname=='event'
-		|| tagname=='constraint' || tagname=='invoke'){
+		|| tagname=='constraint' || tagname=='invoke' || tagname=='ontology'||tagname=='service'){
 		str = generateDelBtn(tagname);
 	}
 	//add만
@@ -652,6 +781,23 @@ function addAttribute(dom,tagname){
 		attr_html = attr_html + '<td><input class="input" type="text"></input></td></tr>';
 	}
 	$(dom).append(attr_html);
+}
+function parseDataByName(name){
+	for(var i=0;i<5;i++){
+		dep_arr[i]=0;
+	}
+	$('#attr').empty();
+	
+	if(name == 'baseOntologies'){
+		$('#attr').append(generateAddBtn('ontology'));
+		console.log(baseOntologies);
+		attr_dfs(baseOntologies,0);
+	}
+	else if(name == 'serviceProvider'){
+		//serviceProvider 개수만큼 돌아야함.
+		$('#attr').append(generateAddBtn('serviceProvider'));
+		attr_dfs(serviceProvider,0);
+	}
 }
 function parseDataById(id_val){
 	for(var i =0;i<5;i++){
@@ -707,7 +853,7 @@ $('#attr').on('keyup','.input',function(e){
 //currentText 설정
 $('#attr').on('focus','.input',function(){
 	var parent = $(this).parent().parent().parent().parent().parent();
-	if(currentNode_obj.tagname == 'node'){
+	if(currentNode_obj.tagname == 'node' || currentNode_obj.tagname == 'baseOntologies' || currentNode_obj.tagname=='providerParent'){
 		var stack=[];
 		while(typeof(parent.attr('data-value')) != 'undefined'){
 			stack.push(Number(parent.attr('data-value')));
@@ -722,6 +868,12 @@ $('#attr').on('focus','.input',function(){
 	}
 	else if(currentNode_obj.tagname=='flow'){
 		console.log('flow');
+	}
+	else if(currentNode_obj.tagname =='baseOntologies'){
+		
+	}
+	else if(currentNode_obj.tagname =='serviceProvider'){
+		
 	}
 });
 $('#attr').on('click','.addBtn',function(){
@@ -1797,4 +1949,9 @@ else{
 	
 	console.log(JSON.stringify(activator));
 }
-
+if(!baseOntologies){
+	baseOntologies=createNode('baseOntologies')
+}
+if(!serviceProvider){
+	serviceProvider = createNode('providerParent');
+}

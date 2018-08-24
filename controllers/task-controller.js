@@ -15,7 +15,9 @@ exports.main = function(req, res){
 		node : '',
 		node_inf : '',
 		activator : '',
-		flownamearr: null
+		flownamearr: null,
+		baseOntologies : '',
+		serviceProvider : ''
 	});
 };
 /*
@@ -150,10 +152,10 @@ function generateFlow(obj){
 	var cnt = 0;
 	var flowDic= {};
 	for(var i =0;i<obj.length;i++){
-		console.log(flowDic[obj[i].attributes.name]);
-		console.log(obj[i].tagname);
+		//console.log(flowDic[obj[i].attributes.name]);
+		//console.log(obj[i].tagname);
 		if(obj[i].tagname == 'flow' && typeof flowDic[obj[i].attributes.name]=='undefined'){
-			console.log('flow && undefined');
+			//console.log('flow && undefined');
 			flowDic[obj[i].attributes.name] = cnt;
 			cnt++;
 		}
@@ -179,14 +181,44 @@ function generateFlow(obj){
 	
 	for(var i=0;i<str.length;i++){
 		str[i] += '\n</flow>\n';
-		console.log(str[i]);
 	}
+	//Flow 태그를 만들어서 각 flow 당 하나의 배열로 리턴해줌 String Array 리턴
+	return str;
+}
+function generateAttr(obj){
+	var ret = '<';
+	ret = ret + obj.tagname;
+	var value=null;
+	//Attributes 채워주는 부분
+	for(var key in obj.attributes){
+		if(key=='value'){
+			value = obj.attributes[key];
+		}
+		else{
+			ret = ret + ' ' + key + '="' + obj.attributes[key]+'"';
+		}
+	}
+	if(value){
+		ret = ret + '>' +value;
+	}
+	else{
+		ret += '>\n';
+	}
+	//ChildNode 들어가는 부분
+	for(var i=0;i<obj.childNodes.length;i++){
+		ret += generateAttr(obj.childNodes[i]);
+	}
+	ret = ret + '</' + obj.tagname +'>\n';
+	
+	return ret;
 }
 exports.toxml = function(req,res){
 	var svgArea = req.body.svgtext;
 	var xml = new parser().parseFromString(svgArea,'text/xml');
 	//console.log(xml);
 	//console.log('test : '+req.body.activator);
+	var baseOntologies = JSON.parse(req.body.base_obj);
+	var serviceProvider = JSON.parse(req.body.service_obj);
 	var activator = JSON.parse(req.body.activator);
 	console.log(activator);
 	var gTag = xml.getElementsByTagName('g');
@@ -218,17 +250,34 @@ exports.toxml = function(req,res){
 		temp.name = String(gTag[i].childNodes[0].attributes[4].value);
 		gArray.push(temp);
 	}
-	
+	var str = '';
+	var output_xml = '<?xml version="1.0" encoding="UTF-8"?>'
+		+ '<CAWL name="SilverRobotRoomService" namespace="SilverRobotRoom" version="1.0">'
+		+ '<documentation>Silver Robot Room Service Scenario Document</documentation>';
 	//baseOntologies Tag generate 해주는 부분.
+	str = generateAttr(baseOntologies);
+	output_xml += str;
 	
 	//serviceProvider Tag generate 해주는 부분.
+	str = generateAttr(serviceProvider);
+	str = str.replace("<providerParent>","");
+	str = str.replace("</providerParent>","");
+	output_xml += str;
 	
 	//Activator Tag generate 해주는 부분.
+	str = generateAttr(activator);
+	output_xml += str;
 	
 	//Flow Tag generate 해주는 부분.
 	var node_obj = JSON.parse(req.body.node_obj);
-	generateFlow(node_obj);
+	str = generateFlow(node_obj);//String Array
+	output_xml += str;
 	
+	output_xml += '</CAWL>'
+	
+	fs.writeFile('test.xml', output_xml,'utf8',function(err){
+		//console.log("file write");
+	});
 	
 	
 	var source_re = /\S*[Ss]ource/;
@@ -392,9 +441,9 @@ exports.toxml = function(req,res){
 		last_str+="\n\t</flow>\n";
 	}
 	last_str+="</CAWL>";
-	fs.writeFile('test.xml', last_str,'utf8',function(err){
-		//console.log("file write");
-	});
+//	fs.writeFile('test.xml', last_str,'utf8',function(err){
+//		//console.log("file write");
+//	});
 	
 	
 	res.render('index',{
@@ -405,7 +454,9 @@ exports.toxml = function(req,res){
 		node : '',
 		node_inf : '',
 		activator : '',
-		flownamearr : null
+		flownamearr : null,
+		baseOntologies : '',
+		serviceProvider : ''
 	});
 }
 var node_attr={};
@@ -475,6 +526,17 @@ function activator_parser(node){
 	
 	return ret;
 }
+function flow_parser(node){
+	var ret = {};
+	ret["childNodes"]=[];
+	ret["attributes"]={};
+	ret["tagname"]='flow';
+	ret["parent"]=null;
+	for(var i in node.attributes){
+		ret["attributes"][node.attributes[i].name]=node.attributes[i].value;
+	}
+	return ret;
+}
 
 /*
  * Convert Button
@@ -493,6 +555,17 @@ exports.xmlparse = function(req, res){//xml to svg
 	var getActivator = xml.getElementsByTagName('activator');
 	var getflow = xml.getElementsByTagName('flow');
 	var node_dom = xml.getElementsByTagName('node');
+	var baseOntologies = xml.getElementsByTagName('baseOntologies');
+	var getServiceProvider = xml.getElementsByTagName('serviceProvider');
+	
+	baseOntologies = activator_parser(baseOntologies[0]);
+	var serviceProvider={};
+	serviceProvider['attributes']={};
+	serviceProvider['childNodes']=[];
+	serviceProvider['tagname']='providerParent';
+	for(var i =0;i<getServiceProvider.length;i++){
+		serviceProvider['childNodes'].push(activator_parser(getServiceProvider[i]));
+	}
 	var activator = activator_parser(getActivator[0]);
 	//console.log(JSON.stringify(activator));
 	//console.log(typeof activator)
@@ -500,11 +573,21 @@ exports.xmlparse = function(req, res){//xml to svg
 	//console.log(getActivator[0].childNodes[3].childNodes[3].childNodes[1].childNodes[3]);
 	node_attr={};
 	var node_obj=[];
+	for(var i=0;i<getflow.length;i++){
+		node_obj.push(flow_parser(getflow[i]));
+	}
+	console.log(node_dom[0].parentNode.attributes[0].name);//value
 	for(var node_dom_count=0 ; node_dom_count<node_dom.length ; node_dom_count++){
 		findChild(node_dom[node_dom_count]);
 		nodelist.push(node_attr);
 		node_attr={};
-		node_obj.push(activator_parser(node_dom[node_dom_count]));
+		
+		//attribute, childNode 찾아줌
+		var temp_nodedom = activator_parser(node_dom[node_dom_count]);
+		
+		//parent 찾아줌(Flow name)
+		temp_nodedom['parent'] = node_dom[node_dom_count].parentNode.attributes[0].value;
+		node_obj.push(temp_nodedom);
 	}
 	var flowname=[];
 	for(var i=0;i<getflow.length;i++){
@@ -527,6 +610,8 @@ exports.xmlparse = function(req, res){//xml to svg
 		node : nodelist,
 		node_inf : node_obj,
 		activator : activator,
-		flownamearr : flowname
+		flownamearr : flowname,
+		baseOntologies : baseOntologies,
+		serviceProvider : serviceProvider
 	});
 };

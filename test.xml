@@ -1,1 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><CAWL name="SilverRobotRoomService" namespace="SilverRobotRoom" version="1.0"><documentation>Silver Robot Room Service Scenario Document</documentation><baseOntologies>
+<ontology location="http://203.253.23.12:8180/cawl/" namespace="SSLAB/Context-Aware_Engine/">
+</ontology>
+</baseOntologies>
+
+<serviceProvider name="SilverRobot" location="203.253.23.36">
+<service operation="IotGoodMorning">
+</service>
+<service operation="IoTHealthReport">
+</service>
+<service operation="IoTEmergStatus">
+</service>
+<service operation="IoTJustMove">
+</service>
+<service operation="IoTCallRobot">
+</service>
+</serviceProvider>
+
+<activator name="Activator">
+<activate flow="MainFlow">
+</activate>
+<condition expression="C1">
+<context name="C1">
+<rule name="C1">
+<constraint name="C1">
+<subject type="SubjectType">Subject</subject>
+<verb>Verb</verb>
+<object type="ObjectType">Object</object>
+</constraint>
+</rule>
+</context>
+</condition>
+</activator>
+<flow name="MainFlow" >
+<node name="MorningMsg" state="deActivate">
+<documentation value="MorningMsg Documentation">
+</documentation><condition expression="C2">
+<context name="C2">
+<rule name="C2">
+<constraint name="C2">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IotGoodMorning" subflow="SubFlow">
+</invoke></node><node name="EntireReport" state="deActivate">
+<documentation value="EntireReport Documentation">
+</documentation><condition expression="C3">
+<context name="C3">
+<rule name="C3">
+<constraint name="C3">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IoTHealthReport">
+</invoke></node><node name="Emergency" state="deActivate">
+<documentation value="Emergency Documentation">
+</documentation><condition expression="C4">
+<context name="C4">
+<rule name="C4">
+<constraint name="C4">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IoTEmergStatus">
+</invoke></node><node name="JustMove" state="deActivate">
+<documentation value="JustMove Documentation">
+</documentation><condition expression="C5">
+<context name="C5">
+<rule name="C5">
+<constraint name="C5">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IoTJustMove">
+</invoke></node><node name="CallingRobot" state="deActivate">
+<documentation value="CallingRobot Documentation">
+</documentation><wait joinCondition="Emergency">
+</wait><wait joinCondition="JustMove">
+</wait><condition expression="C6">
+<context name="C6">
+<rule name="C6">
+<constraint name="C6">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IoTCallRobot">
+</invoke></node>
+</flow>
+,<flow name="SubFlow" >
+<node name="SubMorningMsg1" state="deActivate">
+<documentation value="SubMorningMsg1 Documentation">
+</documentation><condition expression="C7">
+<context name="C7">
+<rule name="C7">
+<constraint name="C7">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IotGoodMorning_1">
+</invoke></node><node name="SubMorningMsg2" state="deActivate">
+<documentation value="SubMorningMsg2 Documentation">
+</documentation><condition expression="C8">
+<context name="C8">
+<rule name="C8">
+<constraint name="C8">
+<subject type="SubjectType" value="Subject">
+</subject><verb value="Verb">
+</verb><object type="ObjectType" value="Object">
+</object></constraint></rule></context></condition><invoke operation="IotGoodMorning_2">
+</invoke></node>
+</flow>
 </CAWL>
