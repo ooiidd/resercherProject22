@@ -7,6 +7,7 @@ var currentNode_obj=null;
 var prevRect = null;
 var currentoverRect=null;
 var rectid=0;
+var subject_arr=[];//ajax로 받아온 subject list를 보관하고 있음.
 var tempcircle=[];
 var currentText = null;
 var tempEllipse=null;
@@ -17,11 +18,12 @@ var pathid=0;
 var currentStartDoc=null;
 var currentOverDoc=null;
 var currentLine=null;
-var node_obj=[];
-var flow_obj={};
+var currentPath = null;
+var node_obj=[];//node정보를 가지고 있는 JSON object 
+var flow_obj={};//flow정보를 가지고 있는 JSON object
 var highlight_rect=null;
 var temp_rect;
-var lineDrawing=false;
+var lineDrawing=false;//현재 Line을 그려주고 있는지
 var docStart;//선 그리기 시작할때 시작점
 var docEnd;//선 그리기 시작할때 끝점
 var pa;
@@ -417,6 +419,12 @@ function reset_rect(){
 		stroke: '#000',
 		strokeWidth: 1
 	});
+	if(currentRect){
+		currentRect.attr({
+			stroke: '#000',
+			strokeWidth: 1
+		});
+	}
 }
 //Activator Click 리스너
 function activator_click(){
@@ -491,7 +499,7 @@ baseOntologies_rect.attr({
 var baseOntologies_text = svg.text(225+20,15+28,"BaseOntologies");
 baseOntologies_rect.click(baseOntologies_click);
 
-//serviceProvider
+//serviceProvider rect를 만들어 줌.
 var serviceProvider_rect = svg.rect(425,15,150,50);
 serviceProvider_rect.attr({
 	stroke:"#000",
@@ -671,6 +679,7 @@ function node_dfs(obj,depth){
 	if(obj.tagname == 'documentation'){
 		return ;
 	}
+	
 	var attr_html = '<table>';
 	for(var i=0;i<node_attr[obj.tagname].length;i++){
 		var temp_str = '';
@@ -695,32 +704,45 @@ function node_dfs(obj,depth){
 	else{
 		$(str).prepend(attr_html);
 	}
-	
-	for(var i = 0;i<obj.childNodes.length;i++){
-		if(obj.childNodes[i]){//childNodes가 유효한지
-			dep_arr[depth] = i;
-			var str='#'+root_obj.childNodes[dep_arr[0]].tagname;
-			str+='_div';
-			for(var j = 1;j<depth+1;j++){
-				str += ' > [data-value=';
-				str+=String(dep_arr[j-1]);
+	if(obj.tagname == 'constraint'){
+		var temp_obj = {};
+		temp_obj['subject']=obj.childNodes[0].attributes.value;
+		temp_obj['verb']=obj.childNodes[1].attributes.value;
+		temp_obj['object']=obj.childNodes[2].attributes.value;
+		$(str).append($('<div/>',{
+			'data-tagname':'svo'
+		}));
+		str += ' > div'
+		addSVO(str,temp_obj);
+	}
+	else{
+		for(var i = 0;i<obj.childNodes.length;i++){
+			if(obj.childNodes[i]){//childNodes가 유효한지
+				dep_arr[depth] = i;
+				var str='#'+root_obj.childNodes[dep_arr[0]].tagname;
+				str+='_div';
+				for(var j = 1;j<depth+1;j++){
+					str += ' > [data-value=';
+					str+=String(dep_arr[j-1]);
+					str+=']';
+				}
+				
+				//childNode의 div추가
+				$(str).append($('<div/>',{
+					'data-value':i,
+					'data-tagname':obj.childNodes[i].tagname
+				}));
+				str+=' > [data-value=';
+				str+=String(i);
 				str+=']';
+				addBtn($(str),obj.childNodes[i].tagname);
+				console.log('생성 : '+str+' > '+i);
+				node_dfs(obj.childNodes[i],depth+1);
 			}
-			
-			//childNode의 div추가
-			$(str).append($('<div/>',{
-				'data-value':i,
-				'data-tagname':obj.childNodes[i].tagname
-			}));
-			str+=' > [data-value=';
-			str+=String(i);
-			str+=']';
-			addBtn($(str),obj.childNodes[i].tagname);
-			console.log('생성 : '+str+' > '+i);
-			node_dfs(obj.childNodes[i],depth+1);
 		}
 	}
 }
+//Add 버튼을 만들어 주는 함수 name을 받아서 만들어줌 Add + name  string 반환
 function generateAddBtn(name){
 	var str = '<button class="addBtn" type="button" data-name="'+name+'">Add '+name+'</button>';
 	try{
@@ -730,6 +752,7 @@ function generateAddBtn(name){
 		str = null;
 	}
 }
+//Delete 버튼을 만들어 주는 함수 name 을 받아서 만들어 줌 Del + name  string 반환
 function generateDelBtn(name){
 	var str = '<button class="delBtn" type="button" data-name="'+name+'">Del '+name+'</button>';
 	try{
@@ -747,6 +770,7 @@ var tagChild = {
 	context : 'rule',
 	serviceProvider : 'service'
 }
+//실질적으로 dom과 tagname 을 받아서 dom에 버튼들을 추가해 준다.
 function addBtn(dom,tagname){
 	//button
 	var str = '';
@@ -772,6 +796,7 @@ function addBtn(dom,tagname){
 		$(dom).append(str);
 	}
 }
+//dom에 Attribute를 추가해 준다.
 function addAttribute(dom,tagname){
 	var attr_html = '<table>';
 	console.log(tagname);
@@ -836,6 +861,7 @@ function parseDataById(id_val){
 	
 	
 }
+
 //Prevent enter event
 $('#attr').on('keypress','.input',function(e){
 	if(e.keyCode === 13){
@@ -876,9 +902,185 @@ $('#attr').on('focus','.input',function(){
 		
 	}
 });
+
+//subject, verb, object를 <select>로 따로 처리해주는 함수
+function addSVO(dom,obj){
+	var attr_html = '<table>';
+	attr_html = attr_html + '<tr data-value="0"><td><span>subject</span></td><td><select class="subject"></select></td></tr>';
+	attr_html = attr_html + '<tr data-value="1"><td><span>verb</span></td><td><select class="verb"></select></td></tr>';
+	attr_html = attr_html + '<tr data-value="2"><td><span>object</span></td><td><select class="object"></select></td></tr>';
+	attr_html += '</table>';
+	$(dom).append(attr_html);
+	var subject_dom=$(dom).children().first().children().first().children().first().children().eq(1).children();
+	var verb_dom = $(dom).children().first().children().first().children().eq(1).children().eq(1).children();
+	var object_dom = $(dom).children().first().children().first().children().eq(2).children().eq(1).children();
+	if(obj){
+		console.log(obj);
+		$(subject_dom).append('<option>'+obj.subject+'</option>');
+		$(verb_dom).append('<option>'+obj.verb+'</option>');
+		$(object_dom).append('<option>'+obj.object+'</option>');
+		for(var i=0;i<subject_arr.length;i++){
+			$(subject_dom).append('<option>'+subject_arr[i]+'</option>');
+		}
+	}
+	else{
+		$(subject_dom).append('<option>NONE</option>');
+		for(var i=0;i<subject_arr.length;i++){
+			$(subject_dom).append('<option>'+subject_arr[i]+'</option>');
+		}
+	}
+}
+
+//DeleteNode버튼 클릭 리스너
+$('#delrect').on('click',function(){
+	if(!currentRect){
+		return ;
+	}
+	//node_obj 에서의 link 삭제
+	for(var i=0;i<node_obj.length;i++){
+		for(var j=0;j<node_obj[i].link.length;j++){
+			if(node_obj[i].link[j].attributes.name == currentRect.attr('nodename')){
+				node_obj[i].link.splice(j,1);
+			}
+		}
+	}
+	//node_obj 직접 삭제
+	for(var i=0;i<node_obj.length;i++){
+		if(node_obj[i].attributes.name == currentRect.attr('nodename')){
+			node_obj.splice(i,1);
+		}
+	}
+	
+	//html에서의 삭제
+	console.log(currentRect.attr('id'));
+	var temp_remove_col = findRectArr[Number(currentRect.attr('id'))].col;
+	var temp_remove_row = findRectArr[Number(currentRect.attr('id'))].row;
+	rectarr[temp_remove_col][temp_remove_row] = null;
+	
+	var gTag = currentRect.parent();
+	var remove_arr=[];
+	
+	for(var i=2;i<gTag.children().length;i++){
+		var remove_cnt = Number(gTag.children()[i].attr('pathid'));
+		remove_arr.push(remove_cnt);
+	}
+	for(var i=0;i<remove_arr.length;i++){
+		$('circle[pathid='+remove_arr[i]+']').remove();
+		$('path[data-id='+remove_arr[i]+']').remove();
+	}
+	//gTag 전체 삭제
+	currentRect.parent().remove();
+});
+//subject <select>의 change 리스너
+$('#attr').on('change','.subject',function(){
+	console.log($(this).val());
+	var verb_dom = ($(this).parent().parent().parent().children().eq(1).children().eq(1).children());
+	var object_dom = ($(this).parent().parent().parent().children().eq(2).children().eq(1).children());
+	$(verb_dom).children().remove();
+	$(object_dom).children().remove();
+	
+	//node_obj를 바꿔준다.
+	var stack=[];
+	var parent = $(this).parent()
+	for(var i=0;i<9;i++){
+		if(parent.attr('data-value')){
+			stack.push(Number(parent.attr('data-value')));
+		}
+		parent = parent.parent();
+	}
+	stack.reverse();
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length;i++){
+		node = node.childNodes[stack[i]];
+	}
+	node.attributes['value'] = $(this).val();
+	
+	$(verb_dom).append('<option>NONE</option>');
+	var params = {subject: $(this).val()};
+	$.ajax({
+		url: "/ajax2",
+		type: "GET",
+		dataType: 'json',
+		data:params,
+		async: true,
+		success: function(data){
+			var ret = (JSON.parse(data));
+			for(var obj in ret){
+				$(verb_dom).append("<option>"+ret[obj]+"</option>");
+			}
+		},
+		error: function(json){
+		}
+	});
+});
+
+//verb <select>의 change 리스너
+$('#attr').on('change','.verb',function(){
+	console.log($(this).val());
+	var subject_dom = ($(this).parent().parent().parent().children().eq(0).children().eq(1).children());
+	var object_dom = ($(this).parent().parent().parent().children().eq(2).children().eq(1).children());
+	$(object_dom).children().remove();
+	$(object_dom).append('<option>NONE</option>');
+	
+	//node_obj를 바꿔준다.
+	var stack=[];
+	var parent = $(this).parent()
+	for(var i=0;i<9;i++){
+		if(parent.attr('data-value')){
+			stack.push(Number(parent.attr('data-value')));
+		}
+		parent = parent.parent();
+	}
+	stack.reverse();
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length;i++){
+		node = node.childNodes[stack[i]];
+	}
+	node.attributes['value'] = $(this).val();
+	
+	var params = {predicate: $(this).val(),
+			subject: $(subject_dom).val()};
+	$.ajax({
+		url: "/ajax3",
+		type: "GET",
+		dataType: 'json',
+		data:params,
+		async: true,
+		success: function(data){
+			var ret = (JSON.parse(data));
+			for(var obj in ret){
+				$(object_dom).append("<option>"+ret[obj]+"</option>");
+			}
+		},
+		error: function(json){
+		}
+	});
+});
+
+//object <select>의 change 리스너
+$('#attr').on('change','.object',function(){
+	//node_obj를 바꿔준다.
+	var stack=[];
+	var parent = $(this).parent()
+	for(var i=0;i<9;i++){
+		if(parent.attr('data-value')){
+			stack.push(Number(parent.attr('data-value')));
+		}
+		parent = parent.parent();
+	}
+	stack.reverse();
+	var node = currentNode_obj;
+	for(var i=0;i<stack.length;i++){
+		node = node.childNodes[stack[i]];
+	}
+	node.attributes['value'] = $(this).val();
+})
+
+//add 버튼의 클릭 리스너
 $('#attr').on('click','.addBtn',function(){
-	console.log($(this).attr('data-name'));
+	console.log($(this).attr('data-name'));//tag name 
 	console.log($(this).parent().attr('data-value'));
+	
 	var parent = $(this).parent();
 	var stack=[];
 	while(typeof(parent.attr('data-value')) != 'undefined'){
@@ -892,18 +1094,32 @@ $('#attr').on('click','.addBtn',function(){
 	}
 	node.childNodes.push(createNode($(this).attr('data-name')));
 	var value = node.childNodes.length-1;
-	
+	//constraint일때 subject, verb, object를 추가해 주어야 함.
+
 	$(this).parent().append($('<div/>',{
 		'data-value':value,
 		'data-tagname':$(this).attr('data-name')
 	}));
+
 	addBtn($(this).parent().children().last(),$(this).attr('data-name'));
 	addAttribute($(this).parent().children().last(),$(this).attr('data-name'));
+	
+	if($(this).attr('data-name') == 'constraint'){
+		node.childNodes[value].childNodes.push(createNode('subject'));
+		node.childNodes[value].childNodes.push(createNode('verb'));
+		node.childNodes[value].childNodes.push(createNode('object'));
+		$(this).parent().children().last().append($('<div/>',{
+			'data-tagname':'svo'
+		}));
+		addSVO($(this).parent().children().last().children().last());
+	}
 	value = null;
 	node = null;
 	parent = null;
 	stack = null;
 });
+
+//Del버튼의 클릭 리스너
 $('#attr').on('click','.delBtn',function(){
 	var parent = $(this).parent();
 	var stack=[];
@@ -925,6 +1141,8 @@ $('#attr').on('click','.delBtn',function(){
 	var parent = $(this).parent();
 	parent.remove();
 });
+
+//Activator클릭시 오른쪽에 Attribute를 보여주는 함수
 function parseData(data){
 	$('#attr').empty();
 	$('#nodediv').remove();
@@ -962,6 +1180,8 @@ function parseData(data){
 	$('#verb_select').change(verb_select_f);
 	$('#object_select').change(object_select_f);
 }
+
+//화살표를 만들어주는 함수
 function direction(element){
 	var temp_attr=path[element].attr('d');
 	path[element].attr({
@@ -1125,9 +1345,10 @@ var move = function(dx,dy,x,y,event){
 		});
 	}
 }
-
 //rect drag 리스너중 start(mouse down 발생시)리스너
+//rect클릭 이벤트 또한 여기서 처리해줌
 var start = function(){
+	reset_rect();
 	activator_rect.attr({
 		stroke: "#000",
 		strokeWidth:1
@@ -1172,8 +1393,7 @@ var start = function(){
 				cur_obj = node_obj[i];
 			}
 		}
-		console.log(prev_obj);
-		console.log(cur_obj);
+		//prev_obj.lin
 		if(prev_obj.tagname == 'node' && prev_obj.parent === null){
 			alert('Flow에 연결이 되어있지 않습니다.');
 			currentRect.attr({
@@ -1192,7 +1412,7 @@ var start = function(){
 		else{
 			cur_obj.parent = prev_obj.parent;
 		}
-		
+		prev_obj.link.push(cur_obj);
 		drawLinef(FindRectf(findRectArr,prevRect.attr("nodename")),FindRectf(findRectArr,currentRect.attr("nodename")));
 		
 		currentRect.attr({
@@ -1209,24 +1429,7 @@ var start = function(){
 	}
 	//console.log(currentRect.attr("subject_value"));
 	//console.log("test");
-	var request = $.ajax({
-		url: "/ajax1",
-		type: "GET",
-		dataType: 'json',
-		async: true,
-		success: function(data){
-			//console.log(data);
-			var ret = (JSON.parse(data));
-			$('#subject_select').append("<option value="+currentRect.attr("subject_value")+">"+currentRect.attr("subject_value")+"</option>");
-			for(var obj in ret){
-				//console.log(ret[obj]);
-				$('#subject_select').append("<option value="+obj+">"+ret[obj]+"</option>");
-			}
-		},
-		error: function(json){
-			//console.log("error : "+JSON.stringify(json));
-		}
-	});
+	
 	$('#verb_select').append("<option value="+currentRect.attr("verb_value")+">"+currentRect.attr("verb_value")+"</option>");
 	$('#object_select').append("<option value="+currentRect.attr("verb_value")+">"+currentRect.attr("object_value")+"</option>");
 	//점선으로된 사각형 만들어줌
@@ -1273,6 +1476,21 @@ var start = function(){
 	this.data('origTransform',this.transform().local);
 }
 
+//최초 로딩시 subject들을 서버에서 받아서 subject_arr 배열에 저장해둔다.
+var request = $.ajax({
+	url: "/ajax1",
+	type: "GET",
+	dataType: 'json',
+	async: true,
+	success: function(data){
+		var ret = (JSON.parse(data));
+		for(var obj in ret){
+			subject_arr.push(ret[obj]);
+		}
+	},
+	error: function(json){
+	}
+});
 //rect drag 리스너중 stop(놓았을때 발생)
 var stop = function(){
 	if(line_drawing==false){
@@ -1364,6 +1582,8 @@ var stop = function(){
 	highlight_rect.remove();
 	temp_rect.remove();
 }
+
+//rect하나 만들어 주는 함수 
 function addrect(left,right,width,height,nodename){
 	var newg = svg.g();
 	//g태그 하나 생성
@@ -1446,7 +1666,7 @@ $('#addflow').click(function(){
 	node_obj[node_obj.length-1].attributes.name = temp_name;
 	flow_obj[node_obj.length-1] = node_obj[node_obj.length-1];
 });
-//AddRect 버튼 클릭 리스너
+//AddNode 버튼 클릭 리스너
 $("#addrect").click(function(){
 	var temp_col=0,temp_row;
 	for(var i=1;i<100;i++){
@@ -1471,6 +1691,8 @@ $("#addrect").click(function(){
 	rectarr[temp_col][temp_row] = addrect(temp_col*200+25,temp_row*80+15,150,50,temp_name);
 	findRectArr.push({name:temp_name,col:temp_col,row:temp_row});
 	node_obj.push(createNode('node'));
+	node_obj[node_obj.length-1].childNodes.push(createNode('condition'));
+	node_obj[node_obj.length-1].childNodes[0].childNodes.push(createNode('context'));
 	node_obj[node_obj.length-1].attributes.name = temp_name;
 });
 //flow값(렌더링 할 값이 있으면) 렌더링 해줘야함.
@@ -1490,6 +1712,43 @@ function dfs_parent(node,parent){
 			dfs_parent(node.link[i],parent);
 		}
 	}
+}
+
+//Del Link버튼 클릭 리스너
+$('#dellink').on('click',function(){
+	if(!currentPath){
+		return ;
+	}
+	var path_cnt = Number(currentPath.attr('data-id'));
+	
+	var temp_rect = $('circle[pathid='+path_cnt+'][name=from]').parent().children().eq(0);
+	var temp_rect2 = $('circle[pathid='+path_cnt+'][name=to]').parent().children().eq(0);
+	for(var i =0;i<node_obj.length;i++){
+		if(node_obj[i].attributes.name == temp_rect.attr('nodename')){
+			for(var j=0;j<node_obj[i].link.length;j++){
+				if(node_obj[i].link[j].attributes.name == temp_rect2.attr('nodename')){
+					node_obj[i].link.splice(j,1);
+					break;
+				}
+			}
+			break;
+		}
+	}
+	
+	$('circle[pathid='+path_cnt+']').remove();
+	currentPath.remove();
+	currentPath = null;
+});
+//path(연결 선) click 리스너
+function pathClick(){
+	reset_rect();
+	console.log('pathClick');
+	currentRect = null;
+	currentPath = this;
+	currentPath.attr({
+		stroke: "#00BFFF",
+		strokeWidth: 2
+	});
 }
 //연결선 그려주는 함수
 function drawLinef(start,end,ptid){
@@ -1579,8 +1838,10 @@ function drawLinef(start,end,ptid){
 			markerEnd: marker,
 			fill: "#000000",
 			stroke: "#000",
-			strokeWidth:1
+			strokeWidth:1,
+			'data-id' : pathnum
 		});
+		path[pathnum].click(pathClick);
 		circleArray[pathnum]={
 				start:new_start_circle,
 				end:new_end_circle,
@@ -1666,7 +1927,8 @@ function drawLinef(start,end,ptid){
 			markerEnd: marker,
 			fill: "none",
 			stroke: "#000",
-			strokeWidth:1
+			strokeWidth:1,
+			'data-id' : pathnum
 		});
 		circleArray[pathnum]={
 				start:new_start_circle,
@@ -1764,7 +2026,8 @@ function drawLinef(start,end,ptid){
 			markerEnd: marker,
 			fill: "none",
 			stroke: "#000",
-			strokeWidth:1
+			strokeWidth:1,
+			'data-id' : pathnum
 		});
 		circleArray[pathnum]={
 				start:new_start_circle,

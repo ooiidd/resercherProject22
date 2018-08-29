@@ -128,12 +128,23 @@ function generateNode(obj){
 	//tag name Start
 	var temp = '<'+obj.tagname;
 	
+	var value=null;
 	//attributes
 	for(var key in obj.attributes){
-		temp = temp + ' ' + key + '="' + obj.attributes[key] + '"'
-		
+		if(key == 'value'){
+			value = obj.attributes[key];
+		}
+		else{
+			temp = temp + ' ' + key + '="' + obj.attributes[key] + '"'
+		}
 	}
-	temp+='>\n';
+	temp+='>';
+	if(value){
+		temp+=value;
+	}
+	else{
+		temp+='\n';
+	}
 	
 	//next node (childNodes)
 	for(var i=0;i<obj.childNodes.length;i++){
@@ -152,37 +163,71 @@ function generateFlow(obj){
 	var cnt = 0;
 	var flowDic= {};
 	for(var i =0;i<obj.length;i++){
-		//console.log(flowDic[obj[i].attributes.name]);
-		//console.log(obj[i].tagname);
 		if(obj[i].tagname == 'flow' && typeof flowDic[obj[i].attributes.name]=='undefined'){
-			//console.log('flow && undefined');
 			flowDic[obj[i].attributes.name] = cnt;
 			cnt++;
 		}
 	}
 	
-	console.log("dic : "+JSON.stringify(flowDic));
-	console.log(cnt);
 	
 	var str = new Array(cnt);
 	//str 초기화
-	for(var i =0 ;i<str.length;i++){
-		str[i] = '';
+	for(var key in flowDic){
+		str[key] = '';
 	}
 	//obj 돌면서 <node> 채워줌.
 	for(var i=0;i<obj.length;i++){
 		if(obj[i].tagname == 'node'){
-			str[flowDic[obj[i].parent]] += generateNode(obj[i]);
+			str[obj[i].parent] += generateNode(obj[i]);
 		}
 		else{//flow
-			str[flowDic[obj[i].attributes.name]] = flowTag(obj[i]) + str[flowDic[obj[i].attributes.name]];
+			str[obj[i].attributes.name] = flowTag(obj[i]) + str[obj[i].attributes.name];
 		}
 	}
 	
-	for(var i=0;i<str.length;i++){
-		str[i] += '\n</flow>\n';
+	
+	for(var key in flowDic){
+		str[key] = str[key]+'<source name="Source'+(flowDic[key]+1)+'"/>\n';
+		str[key] = str[key] + '<sink name="Sink'+(flowDic[key]+1)+'"/>\n';
 	}
+	
 	//Flow 태그를 만들어서 각 flow 당 하나의 배열로 리턴해줌 String Array 리턴
+	return str;
+}
+//link 태그들을 채워주는 함수
+function generateLink(obj){
+	var cnt = 0;//flow count
+	var flowDic= {};//flow dictionary
+	for(var i =0;i<obj.length;i++){
+		if(obj[i].tagname == 'flow' && typeof flowDic[obj[i].attributes.name]=='undefined'){
+			flowDic[obj[i].attributes.name] = cnt;
+			cnt++;
+		}
+	}
+	var str={};
+	for(var key in flowDic){
+		str[key] = '';
+	}
+	//link tag 만들어 주는 부분
+	for(var i =0;i<obj.length;i++){
+		if(obj[i].tagname =='node' && obj[i].parent){
+			if(obj[i].link.length>0){
+				for(var j=0;j<obj[i].link.length;j++){//link 개수만큼 루프
+					str[obj[i].parent] = str[obj[i].parent] + '<link from="' + obj[i].attributes.name + '" ';
+					str[obj[i].parent] = str[obj[i].parent] + 'to="' + obj[i].link[j].attributes.name + '"/>\n';
+				}
+			}
+			else{//link length 가 0임
+				str[obj[i].parent] += ('<link from="'+obj[i].attributes.name+'" to="Sink'+(flowDic[obj[i].parent]+1)
+						+'"/>\n');
+			}
+		}
+		else if(obj[i].tagname == 'flow'){
+			str[obj[i].attributes.name] += ('<link from="Source'+(flowDic[obj[i].attributes.name]+1)+'" to="'
+					+obj[i].link[0].attributes.name+'"/>\n');
+		}
+	}
+	//str은 str dictionary (key 는 flow name)
 	return str;
 }
 function generateAttr(obj){
@@ -267,11 +312,19 @@ exports.toxml = function(req,res){
 	str = generateAttr(activator);
 	output_xml += str;
 	
-	//Flow Tag generate 해주는 부분.
+	//Flow의 Node Tag generate 해주는 부분.
 	var node_obj = JSON.parse(req.body.node_obj);
-	str = generateFlow(node_obj);//String Array
-	for(var i=0;i<str.length;i++){
-		output_xml += str[i];
+	str = generateFlow(node_obj);//String Dictionary
+	console.log('flow');
+	console.log(str);
+	
+	//Flow의 link Tag generate 해주는 부분.
+	var link_str = generateLink(node_obj);//String Dictionary
+	var link_cnt = 1;
+	for(var key in str){
+		str[key] += link_str[key];
+		str[key] += '</flow>\n'
+		output_xml += str[key];
 	}
 	
 	output_xml += '</CAWL>'
@@ -549,6 +602,7 @@ function flow_parser(node){
 	ret["childNodes"]=[];
 	ret["attributes"]={};
 	ret["tagname"]='flow';
+	ret["link"]=[];
 	ret["parent"]=null;
 	for(var i in node.attributes){
 		ret["attributes"][node.attributes[i].name]=node.attributes[i].value;
@@ -556,6 +610,22 @@ function flow_parser(node){
 	return ret;
 }
 
+function addLink(node_obj,flow){
+	var from,to;
+	from = flow.from;
+	to = flow.to;
+	
+	var from_obj,to_obj;
+	for(var i=0;i<node_obj.length;i++){
+		if(node_obj[i].attributes.name == from){
+			from_obj = node_obj[i];
+		}
+		else if(node_obj[i].attributes.name == to){
+			to_obj = node_obj[i];
+		}
+	}
+	from_obj.link.push(to_obj);
+}
 /*
  * Convert Button
  */
@@ -590,11 +660,13 @@ exports.xmlparse = function(req, res){//xml to svg
 	node_attr={};
 	//console.log(getActivator[0].childNodes[3].childNodes[3].childNodes[1].childNodes[3]);
 	node_attr={};
+	
+	//node_obj에 flow 채워주는 부분
 	var node_obj=[];
 	for(var i=0;i<getflow.length;i++){
 		node_obj.push(flow_parser(getflow[i]));
 	}
-	console.log(node_dom[0].parentNode.attributes[0].name);//value
+	
 	for(var node_dom_count=0 ; node_dom_count<node_dom.length ; node_dom_count++){
 		findChild(node_dom[node_dom_count]);
 		nodelist.push(node_attr);
@@ -604,6 +676,7 @@ exports.xmlparse = function(req, res){//xml to svg
 		var temp_nodedom = activator_parser(node_dom[node_dom_count]);
 		
 		//parent 찾아줌(Flow name)
+		temp_nodedom['link']=[];
 		temp_nodedom['parent'] = node_dom[node_dom_count].parentNode.attributes[0].value;
 		node_obj.push(temp_nodedom);
 	}
@@ -633,6 +706,12 @@ exports.xmlparse = function(req, res){//xml to svg
 			}
 		}
 		flow.push(templink);
+	}
+	for(var i=0;i<flow.length;i++){
+		for(var j=0;j<flow[i].length;j++){
+			console.log(flow[i][j]);
+			addLink(node_obj,flow[i][j]);
+		}
 	}
 	console.log(flow);
 	res.render('index',{
