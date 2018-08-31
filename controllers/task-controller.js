@@ -4,6 +4,7 @@
 var parser = require('xmldom').DOMParser;
 var fs = require('fs');
 var request = require('request');
+var mime = require('mime');
 //var jsdom = require('jsdom');
 
 exports.main = function(req, res){
@@ -323,15 +324,29 @@ exports.toxml = function(req,res){
 	var link_cnt = 1;
 	for(var key in str){
 		str[key] += link_str[key];
-		str[key] += '</flow>\n'
+		str[key] += '</flow>\n';
 		output_xml += str[key];
 	}
 	
-	output_xml += '</CAWL>'
+	output_xml += '</CAWL>';
+	var d = new Date();
+	var file_name = d.toISOString().slice(0,10).replace(/-/g,"-");
+    file_name+='_';
+    file_name += d.toISOString().slice(11,23).replace(/:/g,"_");
+    file_name = './CAWL/' + file_name + '.xml';
+    console.log(file_name);
+	//file 저장
+	fs.writeFileSync(file_name, output_xml);
 	
-	fs.writeFile('test.xml', output_xml,'utf8',function(err){
-		//console.log("file write");
-	});
+	//Client로 파일 전송
+	var mimetype = mime.lookup(file_name);
+	console.log(mimetype);
+	res.setHeader('Content-disposition', 'attachment; filename =CAWL.xml');
+	res.setHeader('Content-type', mimetype);
+	var filestream = fs.createReadStream(file_name);
+	console.log(filestream);
+	filestream.pipe(res);
+	
 	
 	
 	var source_re = /\S*[Ss]ource/;
@@ -517,7 +532,7 @@ exports.toxml = function(req,res){
 //	});
 	
 	
-	res.render('index',{
+	/*res.render('index',{
 		title : 'main',
 		text: '',//linkstr[0].join('\n'),
 		xml : '',
@@ -528,7 +543,7 @@ exports.toxml = function(req,res){
 		flownamearr : null,
 		baseOntologies : '',
 		serviceProvider : ''
-	});
+	});*/
 }
 var node_attr={};
 function findChild(node){
