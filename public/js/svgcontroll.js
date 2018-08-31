@@ -12,6 +12,7 @@ var tempcircle=[];
 var currentText = null;
 var tempEllipse=null;
 var path=[];
+var currentFocus = null;
 var findRectArr=[];//노드를 만들어 주었는지 알기위해 사용하는 String형 배열 indexOf() 메서드로 찾는다.
 var circleArray=[];
 var pathid=0;
@@ -400,7 +401,6 @@ function activator_list(){
 		}else if(tagname == 'constraint'){
 				context.childNodes[num2].childNodes[num].attributes[attr_name] = value;
 		}else if(tagname == 'activator'){
-			
 		}
 	});
 }
@@ -824,6 +824,27 @@ function parseDataByName(name){
 		attr_dfs(serviceProvider,0);
 	}
 }
+function parseDataFlow(){
+	for(var i =0;i<5;i++){
+		dep_arr[i]=0;
+	}
+	var obj = currentNode_obj;
+	$('#attr').empty();
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'message_div'
+	}));
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'variable_div'
+	}));
+
+	$('#message_div').append(generateAddBtn('message'));
+	$('#variable_div').append(generateAddBtn('variable'));
+	root_obj = currentNode_obj;
+	console.log(currentNode_obj);
+	node_dfs(currentNode_obj,0);
+}
 function parseDataById(id_val){
 	for(var i =0;i<5;i++){
 		dep_arr[i]=0;
@@ -872,8 +893,13 @@ $('#attr').on('keypress','.input',function(e){
 $('#attr').on('keyup','.input',function(e){
 	console.log(this.value);
 	var text = $(this).parent().parent().children().first().children().first().text();
-	console.log(currentText);
-	currentText.attributes[text] = this.value;
+	if($(this).parent().parent().parent().parent().parent().attr('id')){//최상위 name을 건드릴 경우
+		if(text == 'name'){
+			currentRect.attr({'nodename' : this.value});
+			currentText.node.textContent = this.value;
+		}
+	}
+	currentFocus.attributes[text] = this.value;
 });
 
 //currentText 설정
@@ -890,10 +916,20 @@ $('#attr').on('focus','.input',function(){
 		for(var i=0;i<stack.length;i++){
 			node = node.childNodes[stack[i]];
 		}
-		currentText = node;
+		currentFocus = node;
 	}
 	else if(currentNode_obj.tagname=='flow'){
-		console.log('flow');
+		var stack=[];
+		while(typeof(parent.attr('data-value')) != 'undefined'){
+			stack.push(Number(parent.attr('data-value')));
+			parent = parent.parent();
+		}
+		stack.reverse();
+		var node = currentNode_obj;
+		for(var i=0;i<stack.length;i++){
+			node = node.childNodes[stack[i]];
+		}
+		currentFocus = node;
 	}
 	else if(currentNode_obj.tagname =='baseOntologies'){
 		
@@ -1374,7 +1410,12 @@ var start = function(){
 			if(node_obj[i].attributes.name == currentRect.attr('nodename')){
 				console.log(node_obj[i]);
 				currentNode_obj = node_obj[i];
-				parseDataById(1);
+				if(currentNode_obj.tagname == 'flow'){
+					parseDataFlow();
+				}
+				else{
+					parseDataById(1);
+				}
 				break;
 			}
 		}
@@ -2181,6 +2222,12 @@ if(activator){
 			context = condition.childNodes[i];
 		}
 	}
+	if(Object.keys(con_case).length == 0){
+		con_case['attributes']={};
+		con_case['childNodes']=[];
+		con_case['tagname']='case';
+		activator['childNodes'].push(con_case);
+	}
 }
 else{
 	activator = {};
@@ -2213,7 +2260,7 @@ else{
 	console.log(JSON.stringify(activator));
 }
 if(!baseOntologies){
-	baseOntologies=createNode('baseOntologies')
+	baseOntologies=createNode('baseOntologies');
 }
 if(!serviceProvider){
 	serviceProvider = createNode('providerParent');
