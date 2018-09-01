@@ -169,13 +169,21 @@ function generateFlow(obj){
 			cnt++;
 		}
 	}
-	
+//	for(var key in flowDic){
+//		str[key] = str[key]+'<source name="Source'+(flowDic[key]+1)+'"/>\n';
+//	}
 	
 	var str = new Array(cnt);
 	//str 초기화
 	for(var key in flowDic){
 		str[key] = '';
 	}
+	
+
+	for(var key in flowDic){
+		str[key] = str[key]+'<source name="Source'+(flowDic[key]+1)+'"/>\n';
+	}
+	
 	//obj 돌면서 <node> 채워줌.
 	for(var i=0;i<obj.length;i++){
 		if(obj[i].tagname == 'node'){
@@ -188,7 +196,6 @@ function generateFlow(obj){
 	
 	
 	for(var key in flowDic){
-		str[key] = str[key]+'<source name="Source'+(flowDic[key]+1)+'"/>\n';
 		str[key] = str[key] + '<sink name="Sink'+(flowDic[key]+1)+'"/>\n';
 	}
 	
@@ -232,6 +239,11 @@ function generateLink(obj){
 	return str;
 }
 function generateAttr(obj){
+	if(obj.tagname=='case'){
+		if(!obj.attributes.name || !obj.attributes.expression){
+			return '';
+		}
+	}
 	var ret = '<';
 	ret = ret + obj.tagname;
 	var value=null;
@@ -252,7 +264,9 @@ function generateAttr(obj){
 	}
 	//ChildNode 들어가는 부분
 	for(var i=0;i<obj.childNodes.length;i++){
-		ret += generateAttr(obj.childNodes[i]);
+		if(obj.childNodes[i]){
+			ret += generateAttr(obj.childNodes[i]);
+		}
 	}
 	ret = ret + '</' + obj.tagname +'>\n';
 	
@@ -645,8 +659,6 @@ function addLink(node_obj,flow){
  * Convert Button
  */
 exports.xmlparse = function(req, res){//xml to svg
-	
-	
 	var area = req.body.textarea;
 	area=area.replace(/<xs:/gi,"<");
 	area=area.replace(/<\/xs:/gi,"<\/");

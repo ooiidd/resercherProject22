@@ -266,9 +266,16 @@ function activator_list(){
 	}
 	
 	//condition case태그
-	var case_attr = '<div data-tagname="case"><table><span>CONDITION-CASE</span>';
-	case_attr += '<tr><td><span>name</span></td><td><input class="activator_input" type="text"></input></td></tr>';
-	case_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	if(con_case.attributes){
+		var case_attr = '<div data-tagname="case"><table><span>CONDITION-CASE</span>';
+		case_attr += '<tr><td><span>name</span></td><td><input class="activator_input" type="text" value="'+con_case.attributes.name+'"></input></td></tr>';
+		case_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text" value="'+con_case.attributes.expression+'"></input></td></tr>';
+	}
+	else{
+		var case_attr = '<div data-tagname="case"><table><span>CONDITION-CASE</span>';
+		case_attr += '<tr><td><span>name</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+		case_attr += '<tr><td><span>expression</span></td><td><input class="activator_input" type="text"></input></td></tr>';
+	}
 	$('#conditionCaseDiv').append('<hr>');
 	$('#conditionCaseDiv').append(case_attr);
 	$('#conditionCaseDiv').append(event_add);
@@ -441,7 +448,9 @@ function activator_click(){
 		stroke: "#00bfff",
 		strokeWidth: 3
 	});
-	activator_list();
+	currentNode_obj = activator;
+	parseDataActivator();
+	//activator_list();
 }
 
 //처음에 Activator 만들어 주어야함
@@ -618,7 +627,10 @@ var node_attr = {
 		ontology:['location','namespace'],
 		serviceProvider : ['name','location'],
 		service: ['operation'],
-		providerParent : []
+		providerParent : [],
+		activator: ['name'],
+		activate: ['flow']
+		
 };
 //Ontologies, serviceProvider 등을 위한 dfs
 function attr_dfs(obj,depth){
@@ -845,6 +857,35 @@ function parseDataFlow(){
 	console.log(currentNode_obj);
 	node_dfs(currentNode_obj,0);
 }
+function parseDataActivator(){
+	for(var i=0;i<5;i++){
+		dep_arr[i] = 0;
+	}
+	var obj = activator;
+	$('#attr').empty();
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'message_div'
+	}));
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'variable_div'
+	}));
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'activate_div'
+	}));
+	$('#attr').append($('<hr>'));
+	$('#attr').append($('<div/>',{
+		id:'condition_div'
+	}));
+
+	$('#message_div').append(generateAddBtn('message'));
+	$('#variable_div').append(generateAddBtn('variable'));
+	
+	root_obj = activator;
+	node_dfs(activator,0);
+}
 function parseDataById(id_val){
 	for(var i =0;i<5;i++){
 		dep_arr[i]=0;
@@ -896,6 +937,7 @@ $('#attr').on('keyup','.input',function(e){
 	if($(this).parent().parent().parent().parent().parent().attr('id')){//최상위 name을 건드릴 경우
 		if(text == 'name'){
 			currentRect.attr({'nodename' : this.value});
+			findRectArr[currentRect.attr('id')].name = this.value;
 			currentText.node.textContent = this.value;
 		}
 	}
@@ -931,8 +973,18 @@ $('#attr').on('focus','.input',function(){
 		}
 		currentFocus = node;
 	}
-	else if(currentNode_obj.tagname =='baseOntologies'){
-		
+	else if(currentNode_obj.tagname =='activator'){
+		var stack=[];
+		while(typeof(parent.attr('data-value')) != 'undefined'){
+			stack.push(Number(parent.attr('data-value')));
+			parent = parent.parent();
+		}
+		stack.reverse();
+		var node = currentNode_obj;
+		for(var i=0;i<stack.length;i++){
+			node = node.childNodes[stack[i]];
+		}
+		currentFocus = node;
 	}
 	else if(currentNode_obj.tagname =='serviceProvider'){
 		
@@ -1128,6 +1180,7 @@ $('#attr').on('click','.addBtn',function(){
 	for(var i=0;i<stack.length;i++){
 		node = node.childNodes[stack[i]];
 	}
+	console.log(stack);
 	node.childNodes.push(createNode($(this).attr('data-name')));
 	var value = node.childNodes.length-1;
 	//constraint일때 subject, verb, object를 추가해 주어야 함.
@@ -1816,8 +1869,8 @@ function drawLinef(start,end,ptid){
 		pathid++;
 	}
 	var srow,scol,erow,ecol;
-	//console.log("start : "+start);
-	//console.log("end : "+end)
+	console.log("start : "+start);
+	console.log("end : "+end)
 	//console.log(findRectArr[start]);
 	srow = findRectArr[start].row;
 	scol = findRectArr[start].col;
